@@ -55,7 +55,7 @@ const HeaderComponent = () => {
           <Menu.Item key="3" href="/courses/">
             Courses
           </Menu.Item>
-          {!user ? (
+          {user._id ? (
             <SubMenu
               style={{ float: "right" }}
               key="SubMenu1"

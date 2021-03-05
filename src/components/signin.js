@@ -8,8 +8,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { Button } from "antd";
 import { LeftOutlined } from "@ant-design/icons";
 import GoogleLogin from "react-google-login";
-import {useAuth} from "../hooks/useAuth";
-import { Redirect } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { Redirect, useHistory } from "react-router-dom";
 
 const defaultValuesLogin = {
   email: "",
@@ -24,13 +24,13 @@ const validationLogin = yup.object().shape({
 });
 
 const SignInComponent = () => {
-  useAuth();
+  const history = useHistory();
   const dispatch = useDispatch();
   const { register, handleSubmit } = useForm();
   const onSubmit = async (dataInput) => {
     try {
       const result = await axios.post(
-        `http://localhost:5000/auth/login`,
+        `https://api--elearning.herokuapp.com/auth/login`,
         {
           email: dataInput.email,
           password: dataInput.password,
@@ -42,6 +42,7 @@ const SignInComponent = () => {
         }
       );
       localStorage.setItem("token", result.data.token);
+      console.log(result);
 
       dispatch({ type: "LOGIN_DATA", payload: result.data.user });
       alert(`Welcome ${result.data.user.full_name} to Elearning!`);
@@ -53,8 +54,8 @@ const SignInComponent = () => {
         showIcon
         closable
       />;
-      return window.location = "/";
-      
+      // return (window.location.href = "/");
+      return history.push("/");
     } catch (error) {
       return Alert.error(
         // `<div role="alert"> ${error.response.data.message} </div>`,
@@ -95,9 +96,8 @@ const SignInComponent = () => {
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
-
   if (!user) {
-    return <Redirect to="/"/>
+    return <Redirect to="/" />;
   }
   return (
     <section className="signin">

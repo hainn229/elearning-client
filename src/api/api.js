@@ -1,7 +1,7 @@
 import axios from "axios";
 const jwt = localStorage.getItem("token");
 const instance = axios.create({
-  baseUrl: `http://localhost:5000`,
+  baseUrl: `https://api--elearning.herokuapp.com`,
   headers: {
     "Content-Type": "application/json",
     Authorization: "Bearer " + jwt,
@@ -16,7 +16,7 @@ const upload = axios.create({
 });
 
 const api = axios.create({
-  baseUrl: `http://localhost:5000`,
+  baseUrl: `https://api--elearning.herokuapp.com`,
   headers: {
     "Content-Type": "application/json",
   },
