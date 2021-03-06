@@ -35,8 +35,8 @@ const HeaderComponent = () => {
   const onSubmit = async (dataInput) => {
     try {
       const result = await axios.post(
-        `https://api--elearning.herokuapp.com/auth/login`,
-        // `http://localhost:5000/auth/login`,
+        // `https://api--elearning.herokuapp.com/auth/login`,
+        `http://localhost:5000/auth/login`,
         {
           email: dataInput.email,
           password: dataInput.password,
@@ -76,6 +76,7 @@ const HeaderComponent = () => {
     }
   };
   const responseGoogle = async (response) => {
+    console.log(response);
     try {
       const result = await SigninWithGoogle({
         access_token: response.accessToken,
@@ -225,7 +226,7 @@ const HeaderComponent = () => {
           </div>
           <div className="signin-form">
             <h2 className="form-title">Sign in</h2>
-            <form className="register-form" onSubmit={handleSubmit(onSubmit)}>
+            <form className="register-form" onSubmit={handleSubmit(onSubmit)}> 
               <div className="form-group">
                 <label htmlFor="email">
                   <i className="zmdi zmdi-email" />
@@ -271,14 +272,14 @@ const HeaderComponent = () => {
                 />
               </div>
             </form>
-            <div className="social-login">
+            <div>
               <GoogleLogin
                 clientId="998093637270-hhqclmlctiv0cakc2qeduofotciaaetk.apps.googleusercontent.com"
                 onSuccess={responseGoogle}
                 onFailure={responseGoogle}
                 cookiePolicy={"single_host_origin"}
                 buttonText="Or Sign In With Google"
-              ></GoogleLogin>
+              />
             </div>
           </div>
         </div>
