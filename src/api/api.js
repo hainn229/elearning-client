@@ -1,29 +1,25 @@
 import axios from "axios";
 const jwt = localStorage.getItem("token");
 const instance = axios.create({
-  baseUrl: `http://localhost:5000`,
+  // baseUrl: `http://localhost:5000`,
+  baseUrl: `https://api--elearning.herokuapp.com`,
   headers: {
     "Content-Type": "application/json",
-    Authorization: "Bearer " + jwt,
+    authorization: "Bearer " + jwt,
   },
 });
 
 const upload = axios.create({
-  baseUrl: `http://localhost:5000`,
+  // baseUrl: `http://localhost:5000`,
+  baseUrl: `https://api--elearning.herokuapp.com`,
   headers: {
     "Content-Type": "multipart/form-data",
   },
 });
 
-const api = axios.create({
-  baseUrl: `http://localhost:5000`,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
 // Auth
 export const Login = async function (params) {
-  return await api.post("/auth/login", params);
+  return await instance.post("/auth/login", params);
 };
 export const Register = async function (params) {
   return await instance.post("/auth/register", params);
@@ -32,14 +28,7 @@ export const getMyAccount = async function () {
   return await instance.get("/auth/myAccount");
 };
 export const SigninWithGoogle = async function (params) {
-  const apiSign = axios.create({
-    baseUrl: `http://localhost:5000`,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + jwt,
-    },
-  });
-  return await apiSign.post("/auth/google", params);
+  return await instance.post("/auth/google", params);
 };
 
 // Categories

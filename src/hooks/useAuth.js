@@ -5,9 +5,12 @@ import axios from "axios";
 
 const fetchUser = (jwt) => {
   return axios
-    .get("http://localhost:5000/auth/myAccount", {
+    .get(
+      "https://api--elearning.herokuapp.com/auth/myAccount", 
+      // `http://localhost:5000/auth/myAccount`,
+      {
       headers: {
-        Authorization: "Bearer " + jwt,
+        authorization: "Bearer " + jwt,
       },
     })
     .then((res) => res.data);

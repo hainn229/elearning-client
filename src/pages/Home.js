@@ -4,6 +4,7 @@ import HeaderComponent from "../components/layouts/header";
 import FooterComponent from "../components/layouts/footer";
 import ContentComponent from "../components/layouts/content";
 
+
 export const HomePage = () => {
   return (
     <Layout className="layout">
