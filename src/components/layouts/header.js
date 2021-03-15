@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
-import { SigninWithGoogle } from "../../api/api";
 import { useHistory } from "react-router-dom";
 import * as yup from "yup";
 
@@ -12,22 +11,70 @@ import "react-s-alert/dist/s-alert-default.css";
 import "react-s-alert/dist/s-alert-css-effects/bouncyflip.css";
 
 import GoogleLogin from "react-google-login";
-import { Layout, Menu, Card, Input, Button, Avatar, Modal } from "antd";
+import { Layout, Menu, Button, Avatar, Modal } from "antd";
 import {} from "@ant-design/icons";
 
 const { Header } = Layout;
 const { SubMenu } = Menu;
-const { Meta } = Card;
+
+const validateDataSignin = yup.object().shape({
+  email: yup
+    .string()
+    .email("Invalid email address!")
+    .required("Email address is required!"),
+  password: yup.string().required("Password is required!"),
+});
+const validateDataSignup = yup.object().shape({
+  full_name: yup.string().required("Full name is required!"),
+  email: yup
+    .string()
+    .email("Invalid email address!")
+    .required("Email address is required!"),
+  password: yup
+    .string()
+    .min(6, "Minimum password length is six characters")
+    .required("Password is required!"),
+  re_password: yup
+    .string()
+    .min(6, "Minimum password length is six characters")
+    .oneOf([yup.ref("password")], "Repeat password do not match!")
+    .required("Password is required!"),
+});
+
+// const validateDataSignup = yup.object().shape({
+//   full_name: yup.string().required(),
+//   email: yup.string().email().required(),
+//   password: yup.string().min(6).required(),
+//   re_password: yup
+//     .string()
+//     .min(6)
+//     .oneOf([yup.ref("password")])
+//     .required(),
+// });
 
 const HeaderComponent = () => {
   useAuth();
   const history = useHistory();
   const dispatch = useDispatch();
+
+  // onSubmit Sign In
   const { register, handleSubmit } = useForm();
+
+  // onSubmit Sign Up
+  const { register: register1, handleSubmit: handleSubmit1 } = useForm();
 
   const [isModal1Visible, setIsModal1Visible] = useState(false);
   const [isModal2Visible, setIsModal2Visible] = useState(false);
-
+  const defaultValSignin = {
+    email: "",
+    password: "",
+  };
+  const defaultValSignup = {
+    full_name: "",
+    email: "",
+    password: "",
+    re_password: "",
+  };
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
@@ -35,8 +82,8 @@ const HeaderComponent = () => {
   const onSubmit = async (dataInput) => {
     try {
       const result = await axios.post(
-        // `https://api--elearning.herokuapp.com/auth/login`,
-        `http://localhost:5000/auth/login`,
+        `https://api--elearning.herokuapp.com/auth/login`,
+        // `http://localhost:5000/auth/login`,
         {
           email: dataInput.email,
           password: dataInput.password,
@@ -47,10 +94,10 @@ const HeaderComponent = () => {
           },
         }
       );
-      // const result = await Login(dataInput);
       if (result.data) {
         localStorage.setItem("token", result.data.token);
         setIsModal1Visible(false);
+        dispatch({ type: "MODAL_STATUS", payload: false});
         dispatch({ type: "LOGIN_DATA", payload: result.data.user });
       }
       Alert.success(
@@ -59,50 +106,92 @@ const HeaderComponent = () => {
           html: true,
           position: "top-right",
           effect: "bouncyflip",
-          timeout: 1000,
         }
       );
       return history.push();
-    } catch (error) {
+    } catch (err) {
       return Alert.error(
-        `<div role="alert">${error.response.data.message}</div>`,
+        `<div role="alert">${err.response.data.message}</div>`,
         {
           html: true,
           position: "top-right",
           effect: "bouncyflip",
-          timeout: 1000,
+        }
+      );
+    }
+  };
+
+  const onSubmit1 = async (dataSignup) => {
+    try {
+      const result = await axios.post(
+        `https://api--elearning.herokuapp.com/auth/register`,
+        // `http://localhost:5000/auth/register`,
+        {
+          full_name: dataSignup.full_name,
+          email: dataSignup.email,
+          password: dataSignup.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (result.status === 200) {
+        setIsModal2Visible(false);
+      }
+      Alert.success(`<div role="alert"> ${result.data.message}</div>`, {
+        html: true,
+        position: "top-right",
+        effect: "bouncyflip",
+      });
+      return history.push();
+    } catch (err) {
+      return Alert.error(
+        `<div role="alert">${err.response.data.message}</div>`,
+        {
+          html: true,
+          position: "top-right",
+          effect: "bouncyflip",
         }
       );
     }
   };
   const responseGoogle = async (response) => {
-    console.log(response);
     try {
-      const result = await SigninWithGoogle({
-        access_token: response.accessToken,
-      });
+      const result = await axios.post(
+        `https://api--elearning.herokuapp.com/auth/google`,
+        // `http://localhost:5000/auth/google`,
+        {
+          access_token: response.accessToken,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (result.status === 200) {
         localStorage.setItem("token", result.data.token);
         dispatch({ type: "LOGIN_DATA", payload: result.data.user });
+        setIsModal1Visible(false);
         Alert.success(
           `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
           {
             html: true,
             position: "top-right",
             effect: "bouncyflip",
-            timeout: 1000,
           }
         );
         return history.push();
       }
-    } catch (error) {
+    } catch (err) {
       return Alert.error(
-        `<div role="alert">${error.response.data.message}</div>`,
+        `<div role="alert">${err.response.data.message}</div>`,
         {
           html: true,
           position: "top-right",
           effect: "bouncyflip",
-          timeout: 1000,
         }
       );
     }
@@ -125,7 +214,7 @@ const HeaderComponent = () => {
       <Alert stack={{ limit: 1 }} />
       <div className="logo" style={{ marginTop: "16px", textAlign: "center" }}>
         {/* <img src=""/> */}
-        <h1>Elearning</h1>
+        
       </div>
       <Menu
         className="menu"
@@ -176,7 +265,7 @@ const HeaderComponent = () => {
             title={
               <>
                 <span style={{ marginRight: "10px" }}>{user.full_name}</span>
-                <Avatar size="large" src={user.avatarUrl} />
+                <Avatar size="large" src={user.avatarUrl} />{" "}
               </>
             }
           >
@@ -217,6 +306,7 @@ const HeaderComponent = () => {
                 type="link"
                 onClick={() => {
                   setIsModal1Visible(false);
+                  dispatch({ type: "MODAL_STATUS", payload: false });
                   setIsModal2Visible(true);
                 }}
               >
@@ -226,7 +316,12 @@ const HeaderComponent = () => {
           </div>
           <div className="signin-form">
             <h2 className="form-title">Sign in</h2>
-            <form className="register-form" onSubmit={handleSubmit(onSubmit)}> 
+            <form
+              defaultValue={defaultValSignin}
+              key={1}
+              className="register-form"
+              onSubmit={handleSubmit(onSubmit)}
+            >
               <div className="form-group">
                 <label htmlFor="email">
                   <i className="zmdi zmdi-email" />
@@ -272,14 +367,21 @@ const HeaderComponent = () => {
                 />
               </div>
             </form>
-            <div>
-              <GoogleLogin
-                clientId="998093637270-hhqclmlctiv0cakc2qeduofotciaaetk.apps.googleusercontent.com"
-                onSuccess={responseGoogle}
-                onFailure={responseGoogle}
-                cookiePolicy={"single_host_origin"}
-                buttonText="Or Sign In With Google"
-              />
+            <div className="social-login">
+              <span className="social-label" style={{ fontSize: 15 }}>
+                Or login with
+              </span>
+              <ul className="socials">
+                <li>
+                  <GoogleLogin
+                    clientId="998093637270-hhqclmlctiv0cakc2qeduofotciaaetk.apps.googleusercontent.com"
+                    onSuccess={responseGoogle}
+                    onFailure={responseGoogle}
+                    cookiePolicy={"single_host_origin"}
+                    buttonText="Google"
+                  />
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -294,7 +396,13 @@ const HeaderComponent = () => {
         <div className="signup-content">
           <div className="signup-form">
             <h2 className="form-title">Sign Up</h2>
-            <form method="POST" className="register-form" id="register-form">
+            <form
+              defaultValue={defaultValSignup}
+              key={2}
+              className="register-form"
+              id="register-form"
+              onSubmit={handleSubmit1(onSubmit1)}
+            >
               <div className="form-group">
                 <label htmlFor="full_name">
                   <i className="zmdi zmdi-account material-icons-name" />
@@ -304,6 +412,8 @@ const HeaderComponent = () => {
                   name="full_name"
                   id="full_name"
                   placeholder="Full name"
+                  ref={register1({ required: true })}
+                  required
                 />
               </div>
               <div className="form-group">
@@ -314,7 +424,9 @@ const HeaderComponent = () => {
                   type="email"
                   name="email"
                   id="email"
-                  placeholder="Your Email"
+                  placeholder="Email address"
+                  ref={register1({ required: true })}
+                  required
                 />
               </div>
               <div className="form-group">
@@ -326,6 +438,8 @@ const HeaderComponent = () => {
                   name="password"
                   id="password"
                   placeholder="Password"
+                  ref={register1({ required: true })}
+                  required
                 />
               </div>
               <div className="form-group">
@@ -336,10 +450,11 @@ const HeaderComponent = () => {
                   type="password"
                   name="re_password"
                   id="re_password"
-                  placeholder="Repeat your password"
+                  placeholder="Repeat password"
+                  required
                 />
               </div>
-              <div className="form-group">
+              {/* <div className="form-group">
                 <input
                   type="checkbox"
                   name="agree-term"
@@ -351,18 +466,18 @@ const HeaderComponent = () => {
                     <span />
                   </span>
                   I agree all statements in
-                  <a href="#" className="term-service">
+                  <a href="" className="term-service">
                     Terms of service
                   </a>
                 </label>
-              </div>
+              </div> */}
               <div className="form-group form-button">
                 <input
                   type="submit"
                   name="signup"
                   id="signup"
                   className="form-submit"
-                  defaultValue="Register"
+                  value="Sign Up"
                 />
               </div>
             </form>
@@ -380,6 +495,7 @@ const HeaderComponent = () => {
                 onClick={() => {
                   setIsModal2Visible(false);
                   setIsModal1Visible(true);
+
                 }}
               >
                 I already have an account!

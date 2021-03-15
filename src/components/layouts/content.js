@@ -5,20 +5,23 @@ import {
   Col,
   Row,
   Calendar,
-  Alert,
   Button,
   List,
   Avatar,
   Tabs,
-  Divider
+  Divider,
 } from "antd";
+
+import { UserOutlined } from "@ant-design/icons";
 
 import CarouselComponent from "./carousel";
 import BreadCrumbComponent from "./breadcrumb";
+import CoursesComponent from "../courses/index";
 
 const { Content } = Layout;
 const { Meta } = Card;
 
+// Popular, recently courses
 const data = [
   {
     title: "Ant Design Title 1",
@@ -29,41 +32,12 @@ const data = [
   {
     title: "Ant Design Title 3",
   },
-];
-const data1 = [
   {
-    title: "Title 1",
-  },
-  {
-    title: "Title 2",
-  },
-  {
-    title: "Title 3",
-  },
-  {
-    title: "Title 4",
-  },
-  {
-    title: "Title 5",
+    title: "Ant Design Title 4",
   },
 ];
-
-const callback = (key) => {
-  console.log(key);
-};
 
 const ContentComponent = () => {
-  const [pagination, setPagination] = React.useState({
-    currentPage: 1,
-    limitPage: 10,
-    keywords: "",
-  });
-  const showMore = () => {
-    setPagination({
-      ...pagination,
-      limitPage: pagination.limitPage + 10,
-    });
-  };
   return (
     <Content>
       <CarouselComponent />
@@ -71,204 +45,18 @@ const ContentComponent = () => {
         <BreadCrumbComponent />
         <div className="site-layout-content">
           <div className="site-card-wrapper">
-            <Divider orientation="left">New Courses</Divider>
-            <List
-              grid={{
-                gutter: 16,
-                xs: 1,
-                sm: 2,
-                md: 4,
-                lg: 4,
-                xl: 6,
-                xxl: 3,
-              }}
-              dataSource={data1}
-              renderItem={(item) => (
-                <List.Item>
-                  <Card
-                    style={{
-                      width: "100%",
-                      height: "auto",
-                      border: "2px solid whitesmoke",
-                    }}
-                    cover={
-                      <img
-                        alt="example"
-                        src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-                      />
-                    }
-                  >
-                    <Meta
-                      title={<a href="">{item.title}</a>}
-                      description="Price: $199"
-                    />
-                  </Card>
-                </List.Item>
-              )}
-            />
-          </div>
-        </div>
-        <div className="site-layout-content">
-          <div className="site-card-wrapper">
-            <h1>All Courses</h1>
-            <Tabs defaultActiveKey="0" onChange={callback}>
-              <Tabs.TabPane tab="All" key="0">
-                <List
-                  grid={{
-                    gutter: 16,
-                    xs: 1,
-                    sm: 2,
-                    md: 4,
-                    lg: 4,
-                    xl: 6,
-                    xxl: 3,
-                  }}
-                  dataSource={data1}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <Card
-                        style={{
-                          width: "100%",
-                          height: "auto",
-                          border: "2px solid whitesmoke",
-                        }}
-                        cover={
-                          <img
-                            alt="example"
-                            src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-                          />
-                        }
-                      >
-                        <Meta
-                          title={<a href="">{item.title}</a>}
-                          description="Price: $199"
-                        />
-                      </Card>
-                    </List.Item>
-                  )}
-                />
-              </Tabs.TabPane>
-              <Tabs.TabPane tab="Business" key="1">
-                <List
-                  grid={{
-                    gutter: 16,
-                    xs: 1,
-                    sm: 2,
-                    md: 4,
-                    lg: 4,
-                    xl: 6,
-                    xxl: 3,
-                  }}
-                  dataSource={data1}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <Card
-                        style={{
-                          width: "100%",
-                          height: "auto",
-                          border: "2px solid whitesmoke",
-                        }}
-                        cover={
-                          <img
-                            alt="example"
-                            src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-                          />
-                        }
-                      >
-                        <Meta
-                          title={<a href="">{item.title}</a>}
-                          description="Price: $199"
-                        />
-                      </Card>
-                    </List.Item>
-                  )}
-                />
-              </Tabs.TabPane>
-              <Tabs.TabPane tab="Graphics Design" key="2">
-                <List
-                  grid={{
-                    gutter: 16,
-                    xs: 1,
-                    sm: 2,
-                    md: 4,
-                    lg: 4,
-                    xl: 6,
-                    xxl: 3,
-                  }}
-                  dataSource={data1}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <Card
-                        style={{
-                          width: "100%",
-                          height: "auto",
-                          border: "2px solid whitesmoke",
-                        }}
-                        cover={
-                          <img
-                            alt="example"
-                            src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-                          />
-                        }
-                      >
-                        <Meta
-                          title={<a href="">{item.title}</a>}
-                          description="Price: $199"
-                        />
-                      </Card>
-                    </List.Item>
-                  )}
-                />
-              </Tabs.TabPane>
-              <Tabs.TabPane tab="Web Development" key="3">
-                <List
-                  grid={{
-                    gutter: 16,
-                    xs: 1,
-                    sm: 2,
-                    md: 4,
-                    lg: 4,
-                    xl: 6,
-                    xxl: 3,
-                  }}
-                  dataSource={data1}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <Card
-                        style={{
-                          width: "100%",
-                          height: "auto",
-                          border: "2px solid whitesmoke",
-                        }}
-                        cover={
-                          <img
-                            alt="example"
-                            src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-                          />
-                        }
-                      >
-                        <Meta
-                          title={<a href="">{item.title}</a>}
-                          description="Price: $199"
-                        />
-                      </Card>
-                    </List.Item>
-                  )}
-                />
-              </Tabs.TabPane>
-            </Tabs>
-            <Button onClick={() => showMore()}>More...</Button>
+            <CoursesComponent />
           </div>
         </div>
         <br />
         <Row>
-          <Col className="gutter-row" span={6}>
+          <Col flex="300px">
             <h2> Calendar</h2>
             <div className="site-calendar-demo-card">
               <Calendar fullscreen={false} />
             </div>
           </Col>
-          <Col className="gutter-row" span={9}>
+          <Col flex="auto">
             <h2> Popular Courses</h2>
             <List
               itemLayout="horizontal"
@@ -277,7 +65,12 @@ const ContentComponent = () => {
                 <List.Item>
                   <List.Item.Meta
                     avatar={
-                      <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
+                      <Avatar
+                        size="large"
+                        icon={<UserOutlined />}
+                        shape="square"
+                        // src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"
+                      />
                     }
                     title={<a href="">{item.title}</a>}
                     description="Ant Design, a design language for background applications, is refined by Ant UED Team"
@@ -286,7 +79,7 @@ const ContentComponent = () => {
               )}
             />
           </Col>
-          <Col className="gutter-row" span={9}>
+          <Col flex="auto">
             <h2> Recent Courses</h2>
             <List
               itemLayout="horizontal"
@@ -295,7 +88,12 @@ const ContentComponent = () => {
                 <List.Item>
                   <List.Item.Meta
                     avatar={
-                      <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
+                      <Avatar
+                        size="large"
+                        icon={<UserOutlined />}
+                        shape="square"
+                        // src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"
+                      />
                     }
                     title={<a href="">{item.title}</a>}
                     description="Ant Design, a design language for background applications, is refined by Ant UED Team"

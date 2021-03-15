@@ -1,8 +1,8 @@
 import axios from "axios";
 const jwt = localStorage.getItem("token");
 const instance = axios.create({
-  baseUrl: `http://localhost:5000`,
-  // baseUrl: `https://api--elearning.herokuapp.com`,
+  // baseUrl: `http://localhost:5000`,
+  baseUrl: `https://api--elearning.herokuapp.com`,
   headers: {
     "Content-Type": "application/json",
     authorization: "Bearer " + jwt,
@@ -10,26 +10,12 @@ const instance = axios.create({
 });
 
 const upload = axios.create({
-  baseUrl: `http://localhost:5000`,
-  // baseUrl: `https://api--elearning.herokuapp.com`,
+  // baseUrl: `http://localhost:5000`,
+  baseUrl: `https://api--elearning.herokuapp.com`,
   headers: {
     "Content-Type": "multipart/form-data",
   },
 });
-
-// Auth
-export const Login = async function (params) {
-  return await instance.post("/auth/login", params);
-};
-export const Register = async function (params) {
-  return await instance.post("/auth/register", params);
-};
-export const getMyAccount = async function () {
-  return await instance.get("/auth/myAccount");
-};
-export const SigninWithGoogle = async function (params) {
-  return await instance.post("/auth/google", params);
-};
 
 // Categories
 export const getCategories = async function () {
@@ -43,7 +29,10 @@ export const getCourses = async function () {
 export const postAddCourse = async function (params) {
   return await instance.post("/courses/add", params);
 };
-export const getCourse = async function (params) {
+// export const getCourses = async function (params) {
+//   return await instance.get(`/courses/${params}`);
+// };
+export const getCourseDetails = async function (params) {
   return await instance.get(`/courses/${params}`);
 };
 
