@@ -1,5 +1,7 @@
 import React from "react";
 import { Carousel } from "react-bootstrap";
+import { Button } from "antd";
+import { Link } from "react-router-dom";
 
 const CarouselComponent = () => {
   return (
@@ -7,36 +9,37 @@ const CarouselComponent = () => {
       <Carousel>
         <Carousel.Item interval={5000}>
           <img
-            style={{ width: "100%", height: "700px"}}
-            className="d-block w-100"
-            src="https://images.wallpaperscraft.com/image/books_mug_glasses_191440_3840x2160.jpg"
+            style={{ width: "100%", height: "700px" }}
+            src="https://upm.com.vn/uploads/files/MR-3017-industry-elearning-1%20copy.jpg"
             alt="First slide"
           />
           <Carousel.Caption>
             {/* <h3>First slide label</h3>
             <h5>Nulla vitae elit libero, a pharetra augue mollis interdum.</h5> */}
-            <button href="/courses/" className="btn btn-primary">Start Learning Now!</button>
+            <Button type="primary">
+              <Link to={`/courses/`}>Start Learning Now!</Link>
+            </Button>
           </Carousel.Caption>
         </Carousel.Item>
         <Carousel.Item interval={5000}>
           <img
-            style={{ width: "100%", height: "700px"}}
-            className="d-block w-100"
-            src="https://images.wallpaperscraft.com/image/learning_books_laptop_186076_3840x2160.jpg"
+            style={{ width: "100%", height: "700px" }}
+            src="https://www.softwaresuggest.com/blog/wp-content/uploads/2019/10/e-learning-marketing-FB.png"
             alt="Second slide"
           />
 
           <Carousel.Caption>
             {/* <h3>Second slide label</h3>
             <h5>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</h5> */}
-            <button href="/courses/" className="btn btn-primary">Start Learning Now!</button>
+            <Button type="primary">
+              <Link to={`/courses/`}>Start Learning Now!</Link>
+            </Button>
           </Carousel.Caption>
         </Carousel.Item>
         <Carousel.Item interval={5000}>
           <img
-            style={{ width: "100%", height: "700px"}}
-            className="d-block w-100"
-            src="https://images.wallpaperscraft.com/image/books_table_lamp_113765_3840x2160.jpg"
+            style={{ width: "100%", height: "700px" }}
+            src="https://websitehoctructuyen.com/wp-content/uploads/2020/08/e-learning-la-gi.jpg"
             alt="Third slide"
           />
 
@@ -45,7 +48,26 @@ const CarouselComponent = () => {
             <h5>
               Praesent commodo cursus magna, vel scelerisque nisl consectetur.
             </h5> */}
-            <button href="/courses/" className="btn btn-primary">Start Learning Now!</button>
+            <Button type="primary">
+              <Link to={`/courses/`}>Start Learning Now!</Link>
+            </Button>
+          </Carousel.Caption>
+        </Carousel.Item>
+        <Carousel.Item interval={5000}>
+          <img
+            style={{ width: "100%", height: "700px" }}
+            src="https://appinventiv.com/wp-content/uploads/sites/1/2018/12/mLearning-Stats.jpg"
+            alt="Third slide"
+          />
+
+          <Carousel.Caption>
+            {/* <h3>Third slide label</h3>
+            <h5>
+              Praesent commodo cursus magna, vel scelerisque nisl consectetur.
+            </h5> */}
+            <Button type="primary">
+              <Link to={`/courses/`}>Start Learning Now!</Link>
+            </Button>
           </Carousel.Caption>
         </Carousel.Item>
       </Carousel>

@@ -1,9 +1,13 @@
 import { combineReducers } from "redux";
 import signInReducer from "./signin";
 import coursesReducer from "./courses";
-import wishlistReducer from "./wishlist";
+import categoriesReducer from "./categories";
+import searchReducer from "./search";
+import detailsCourseReducer from "./detailsCourse";
 export const myReducers = combineReducers({
     signInReducer,
     coursesReducer,
-    wishlistReducer,
+    categoriesReducer,
+    searchReducer,
+    detailsCourseReducer,
 });

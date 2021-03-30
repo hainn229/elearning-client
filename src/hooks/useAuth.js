@@ -3,11 +3,11 @@ import { useAsync } from "react-hook-async";
 import { useDispatch } from "react-redux";
 import axios from "axios";
 
-const fetchUser = (jwt) => {
-  return axios
+const fetchUser = async (jwt) => {
+  return await axios
     .get(
       "https://api--elearning.herokuapp.com/auth/myAccount", 
-      // `http://localhost:5000/auth/myAccount`,
+      // `http://localhost:4000/auth/myAccount`,
       {
       headers: {
         authorization: "Bearer " + jwt,

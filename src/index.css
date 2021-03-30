@@ -29,7 +29,7 @@ code {
 }
 @media screen and (min-width: 1600px) {
   .container-content {
-    max-width: 1600px;
+    max-width: 1480px;
   }
 }
 
@@ -58,6 +58,21 @@ code {
   transition: 0.6s ease-in-out left;
 }
 
-.searchResults {
-  display:none;
+.searchResults,
+.btnShowOrHide,
+.shopingCart,
+.updateAvt {
+  display: none;
+}
+
+.tableCourses {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tableCourses th,
+td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
 }

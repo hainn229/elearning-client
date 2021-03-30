@@ -1,9 +1,10 @@
+/* eslint-disable jsx-a11y/img-redundant-alt */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
-import { useHistory } from "react-router-dom";
+import { useHistory, Link } from "react-router-dom";
 import * as yup from "yup";
 
 import Alert from "react-s-alert";
@@ -11,8 +12,17 @@ import "react-s-alert/dist/s-alert-default.css";
 import "react-s-alert/dist/s-alert-css-effects/bouncyflip.css";
 
 import GoogleLogin from "react-google-login";
-import { Layout, Menu, Button, Avatar, Modal } from "antd";
-import {} from "@ant-design/icons";
+import {
+  Layout,
+  Menu,
+  Button,
+  Avatar,
+  Modal,
+  Popconfirm,
+  List,
+  Row,
+} from "antd";
+import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 const { SubMenu } = Menu;
@@ -61,7 +71,7 @@ const HeaderComponent = () => {
   const { register, handleSubmit } = useForm();
 
   // onSubmit Sign Up
-  const { register: register1, handleSubmit: handleSubmit1 } = useForm();
+  const { register: signin, handleSubmit: handleSubmitSignin } = useForm();
 
   const [isModal1Visible, setIsModal1Visible] = useState(false);
   const [isModal2Visible, setIsModal2Visible] = useState(false);
@@ -78,28 +88,81 @@ const HeaderComponent = () => {
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
+  const userId = user._id;
 
-  const onSubmit = async (dataInput) => {
-    try {
-      const result = await axios.post(
-        `https://api--elearning.herokuapp.com/auth/login`,
-        // `http://localhost:5000/auth/login`,
-        {
-          email: dataInput.email,
-          password: dataInput.password,
+  const onSubmitSignin = async (dataInput) => {
+    const result = await axios.post(
+      // `https://api--elearning.herokuapp.com/auth/login`,
+      `http://localhost:4000/auth/login`,
+      {
+        email: dataInput.email,
+        password: dataInput.password,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (result.data) {
-        localStorage.setItem("token", result.data.token);
-        setIsModal1Visible(false);
-        dispatch({ type: "MODAL_STATUS", payload: false});
-        dispatch({ type: "LOGIN_DATA", payload: result.data.user });
       }
+    );
+    if (result.data) {
+      localStorage.setItem("token", result.data.token);
+      setIsModal1Visible(false);
+      dispatch({ type: "LOGIN_DATA", payload: result.data.user });
+    }
+    Alert.success(
+      `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
+      {
+        html: true,
+        position: "top-right",
+        effect: "bouncyflip",
+      }
+    );
+    return history.push();
+  };
+
+  const onSubmitSignup = async (dataSignup) => {
+    const result = await axios.post(
+      // `https://api--elearning.herokuapp.com/auth/register`,
+      `http://localhost:4000/auth/register`,
+      {
+        full_name: dataSignup.full_name,
+        email: dataSignup.email,
+        password: dataSignup.password,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (result.status === 200) {
+      setIsModal2Visible(false);
+    }
+    Alert.success(`<div role="alert"> ${result.data.message}</div>`, {
+      html: true,
+      position: "top-right",
+      effect: "bouncyflip",
+    });
+    return history.push();
+  };
+
+  const responseGoogle = async (response) => {
+    const result = await axios.post(
+      // `https://api--elearning.herokuapp.com/auth/google`,
+      `http://localhost:4000/auth/google`,
+      {
+        access_token: response.accessToken,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (result.status === 200) {
+      localStorage.setItem("token", result.data.token);
+      dispatch({ type: "LOGIN_DATA", payload: result.data.user });
+      setIsModal1Visible(false);
       Alert.success(
         `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
         {
@@ -109,91 +172,6 @@ const HeaderComponent = () => {
         }
       );
       return history.push();
-    } catch (err) {
-      return Alert.error(
-        `<div role="alert">${err.response.data.message}</div>`,
-        {
-          html: true,
-          position: "top-right",
-          effect: "bouncyflip",
-        }
-      );
-    }
-  };
-
-  const onSubmit1 = async (dataSignup) => {
-    try {
-      const result = await axios.post(
-        `https://api--elearning.herokuapp.com/auth/register`,
-        // `http://localhost:5000/auth/register`,
-        {
-          full_name: dataSignup.full_name,
-          email: dataSignup.email,
-          password: dataSignup.password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (result.status === 200) {
-        setIsModal2Visible(false);
-      }
-      Alert.success(`<div role="alert"> ${result.data.message}</div>`, {
-        html: true,
-        position: "top-right",
-        effect: "bouncyflip",
-      });
-      return history.push();
-    } catch (err) {
-      return Alert.error(
-        `<div role="alert">${err.response.data.message}</div>`,
-        {
-          html: true,
-          position: "top-right",
-          effect: "bouncyflip",
-        }
-      );
-    }
-  };
-  const responseGoogle = async (response) => {
-    try {
-      const result = await axios.post(
-        `https://api--elearning.herokuapp.com/auth/google`,
-        // `http://localhost:5000/auth/google`,
-        {
-          access_token: response.accessToken,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (result.status === 200) {
-        localStorage.setItem("token", result.data.token);
-        dispatch({ type: "LOGIN_DATA", payload: result.data.user });
-        setIsModal1Visible(false);
-        Alert.success(
-          `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
-          {
-            html: true,
-            position: "top-right",
-            effect: "bouncyflip",
-          }
-        );
-        return history.push();
-      }
-    } catch (err) {
-      return Alert.error(
-        `<div role="alert">${err.response.data.message}</div>`,
-        {
-          html: true,
-          position: "top-right",
-          effect: "bouncyflip",
-        }
-      );
     }
   };
   const signOut = async () => {
@@ -205,87 +183,186 @@ const HeaderComponent = () => {
     <Header
       style={{
         position: "fixed",
-        paddingLeft: "10vw",
-        paddingRight: "10vw",
         zIndex: 1,
         width: "100%",
       }}
     >
       <Alert stack={{ limit: 1 }} />
-      <div className="logo" style={{ marginTop: "16px", textAlign: "center" }}>
-        {/* <img src=""/> */}
-        
-      </div>
-      <Menu
-        className="menu"
-        theme="dark"
-        mode="horizontal"
-        defaultSelectedKeys={["1"]}
-      >
-        <Menu.Item key="1" href="/">
-          Home
-        </Menu.Item>
-        <SubMenu key="2" title="Categories">
-          <Menu.Item key="setting:1">Business</Menu.Item>
-          <Menu.Item key="setting:2">Graphics Design</Menu.Item>
-          <Menu.Item key="setting:3">Web Development</Menu.Item>
-        </SubMenu>
-        <Menu.Item key="3" href="/courses/">
-          Courses
-        </Menu.Item>
-        {!user.email ? (
+      <Row justify="center" align="top">
+        <div style={{ width: "1440px" }}>
+          <div
+            className="logo"
+            style={{ marginTop: "16px", textAlign: "center" }}
+          >
+            <a href="/">
+              <h1>Elearning</h1>
+            </a>
+            {/* <img src=""/> */}
+          </div>
           <Menu
-            style={{ float: "right" }}
-            className="menu1"
+            style={{ fontSize: "18px" }}
+            className="menu"
             theme="dark"
             mode="horizontal"
+            defaultSelectedKeys={["1"]}
           >
-            <Button
-              style={{ marginRight: "10px" }}
-              onClick={() => {
-                setIsModal1Visible(true);
-              }}
-            >
-              Sign In
-            </Button>
-            <Button
-              type="primary"
-              onClick={() => {
-                setIsModal2Visible(true);
-              }}
-            >
-              Sign Up
-            </Button>
-          </Menu>
-        ) : (
-          <SubMenu
-            style={{ float: "right" }}
-            key="SubMenu"
-            key="5"
-            title={
+            {!user.email ? (
               <>
-                <span style={{ marginRight: "10px" }}>{user.full_name}</span>
-                <Avatar size="large" src={user.avatarUrl} />{" "}
+                <Menu
+                  style={{ float: "right" }}
+                  className="menu1"
+                  theme="dark"
+                  mode="horizontal"
+                >
+                  <Button
+                    style={{ marginRight: "10px" }}
+                    onClick={() => {
+                      setIsModal1Visible(true);
+                    }}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      setIsModal2Visible(true);
+                    }}
+                  >
+                    Sign Up
+                  </Button>
+                </Menu>
+                <Menu
+                  style={{ float: "right" }}
+                  className="menu1"
+                  theme="dark"
+                  mode="horizontal"
+                >
+                  <div className="demo">
+                    <div style={{ marginLeft: 70, whiteSpace: "nowrap" }}>
+                      <Popconfirm
+                        placement="bottomRight"
+                        icon={<p />}
+                        cancelText="Continue shoping"
+                        okText={"Go to Cart"}
+                        title={
+                          <>
+                            <List></List>
+                            <h5>Total: $ 240.00</h5>
+                          </>
+                        }
+                        onCancel={() => {
+                          console.log("Continue shoping");
+                        }}
+                        onConfirm={() => {
+                          console.log("Go to cart");
+                        }}
+                      >
+                        <ShoppingCartOutlined
+                          style={{
+                            fontSize: 25,
+                            marginRight: "20px",
+                            marginTop: "5px",
+                          }}
+                        />
+                      </Popconfirm>
+                    </div>
+                  </div>
+                </Menu>
               </>
-            }
-          >
-            <Menu.Item key="setting:1">Amount: $ 240</Menu.Item>
-            <Menu.Item key="setting:2">Edit Profile</Menu.Item>
-            <Menu.Item key="setting:3">My Library</Menu.Item>
-            <Menu.Item key="setting:4">My Cart</Menu.Item>
-            <Menu.Item key="setting:5">Wishlist</Menu.Item>
-            <Menu.Item
-              key="setting:6"
-              danger
-              onClick={() => {
-                signOut();
-              }}
-            >
-              Sign Out
-            </Menu.Item>
-          </SubMenu>
-        )}
-      </Menu>
+            ) : (
+              <>
+                <SubMenu
+                  style={{ float: "right" }}
+                  key="SubMenu"
+                  title={
+                    user.avatarUrl === null ? (
+                      <>
+                        <span style={{ marginRight: "10px" }}>
+                          {user.full_name}
+                        </span>
+                        <Avatar
+                          size="large"
+                          src={<UserOutlined style={{ fontSize: 25 }} />}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ marginRight: "10px" }}>
+                          {user.full_name}
+                        </span>
+                        <Avatar size="large" src={user.avatarUrl} />
+                      </>
+                    )
+                  }
+                >
+                  <Menu.Item style={{ textAlign: "center" }} key="setting:1">
+                    Amount: $ 240
+                  </Menu.Item>
+                  <Menu.Item style={{ textAlign: "center" }} key="setting:2">
+                    <Link to={`/user/edit`}>Edit Profile</Link>
+                  </Menu.Item>
+                  <Menu.Item style={{ textAlign: "center" }} key="setting:3">
+                    <Link to={`/user/library`}>My Library</Link>
+                  </Menu.Item>
+                  <Menu.Item style={{ textAlign: "center" }} key="setting:4">
+                    <Link to={`/tutor/dashboard`}>Teach on Elearning</Link>
+                  </Menu.Item>
+                  <Menu.Item style={{ marginBottom: 20 }} key="setting:5">
+                    <Button
+                      style={{ width: "100%" }}
+                      type="primary"
+                      danger
+                      onClick={() => {
+                        signOut();
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </Menu.Item>
+                </SubMenu>
+
+                <Menu
+                  style={{ float: "right" }}
+                  className="menu1"
+                  theme="dark"
+                  mode="horizontal"
+                >
+                  <div className="demo">
+                    <div style={{ marginLeft: 70, whiteSpace: "nowrap" }}>
+                      <Popconfirm
+                        placement="bottomRight"
+                        icon={<p />}
+                        cancelText="Continue shoping"
+                        okText={"Go to Cart"}
+                        title={
+                          <>
+                            <List></List>
+                            <h5>Total: $ 240.00</h5>
+                          </>
+                        }
+                        onCancel={() => {
+                          console.log("Continue shoping");
+                        }}
+                        onConfirm={() => {
+                          console.log("Go to cart");
+                        }}
+                      >
+                        <ShoppingCartOutlined
+                          style={{
+                            fontSize: 25,
+                            marginRight: "20px",
+                            marginTop: "5px",
+                          }}
+                        />
+                      </Popconfirm>
+                    </div>
+                  </div>
+                </Menu>
+              </>
+            )}
+          </Menu>
+        </div>
+      </Row>
       <Modal
         centered={true}
         width="70%"
@@ -320,7 +397,7 @@ const HeaderComponent = () => {
               defaultValue={defaultValSignin}
               key={1}
               className="register-form"
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={handleSubmitSignin(onSubmitSignin)}
             >
               <div className="form-group">
                 <label htmlFor="email">
@@ -330,7 +407,7 @@ const HeaderComponent = () => {
                   type="email"
                   name="email"
                   placeholder="E-mail Address"
-                  ref={register}
+                  ref={signin}
                 />
               </div>
               <div className="form-group">
@@ -341,7 +418,7 @@ const HeaderComponent = () => {
                   type="password"
                   name="password"
                   placeholder="Password"
-                  ref={register}
+                  ref={signin}
                 />
               </div>
               <div className="form-group">
@@ -401,7 +478,7 @@ const HeaderComponent = () => {
               key={2}
               className="register-form"
               id="register-form"
-              onSubmit={handleSubmit1(onSubmit1)}
+              onSubmit={handleSubmit(onSubmitSignup)}
             >
               <div className="form-group">
                 <label htmlFor="full_name">
@@ -412,7 +489,7 @@ const HeaderComponent = () => {
                   name="full_name"
                   id="full_name"
                   placeholder="Full name"
-                  ref={register1({ required: true })}
+                  ref={register({ required: true })}
                   required
                 />
               </div>
@@ -425,7 +502,7 @@ const HeaderComponent = () => {
                   name="email"
                   id="email"
                   placeholder="Email address"
-                  ref={register1({ required: true })}
+                  ref={register({ required: true })}
                   required
                 />
               </div>
@@ -438,7 +515,7 @@ const HeaderComponent = () => {
                   name="password"
                   id="password"
                   placeholder="Password"
-                  ref={register1({ required: true })}
+                  ref={register({ required: true })}
                   required
                 />
               </div>
@@ -454,23 +531,6 @@ const HeaderComponent = () => {
                   required
                 />
               </div>
-              {/* <div className="form-group">
-                <input
-                  type="checkbox"
-                  name="agree-term"
-                  id="agree-term"
-                  className="agree-term"
-                />
-                <label htmlFor="agree-term" className="label-agree-term">
-                  <span>
-                    <span />
-                  </span>
-                  I agree all statements in
-                  <a href="" className="term-service">
-                    Terms of service
-                  </a>
-                </label>
-              </div> */}
               <div className="form-group form-button">
                 <input
                   type="submit"
@@ -495,7 +555,6 @@ const HeaderComponent = () => {
                 onClick={() => {
                   setIsModal2Visible(false);
                   setIsModal1Visible(true);
-
                 }}
               >
                 I already have an account!

@@ -1,87 +1,72 @@
-import React from "react";
-import {
-  Layout,
-  Card,
-  Col,
-  Row,
-  Calendar,
-  Button,
-  List,
-  Avatar,
-  Tabs,
-  Divider,
-} from "antd";
+import React, { useState, useEffect } from "react";
+import queryString from "query-string";
+import axios from "axios";
 
+import { Link } from "react-router-dom";
+import { Col, Row, Calendar, List, Avatar } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 
 import CarouselComponent from "./carousel";
-import BreadCrumbComponent from "./breadcrumb";
 import CoursesComponent from "../courses/index";
 
-const { Content } = Layout;
-const { Meta } = Card;
-
-// Popular, recently courses
-const data = [
-  {
-    title: "Ant Design Title 1",
-  },
-  {
-    title: "Ant Design Title 2",
-  },
-  {
-    title: "Ant Design Title 3",
-  },
-  {
-    title: "Ant Design Title 4",
-  },
-];
-
 const ContentComponent = () => {
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    limitPage: 5,
+  });
+  const [popularCourses, setPopularCourses] = useState([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const getPopularCourses = async () => {
+    const keys = queryString.stringify(pagination);
+    const result = await axios.get(`http://localhost:4000/courses/popular?${keys}`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    setPopularCourses(result.data.courses.docs);
+  };
+  
+  // console.log(popularCourses);
+
+  useEffect(() => {
+    getPopularCourses();
+  }, []);
+
   return (
-    <Content>
-      <CarouselComponent />
+    <div>
       <div className="container-content">
-        <BreadCrumbComponent />
-        <div className="site-layout-content">
-          <div className="site-card-wrapper">
-            <CoursesComponent />
-          </div>
-        </div>
+        <CarouselComponent />
+        <CoursesComponent />
         <br />
-        <Row>
-          <Col flex="300px">
+        <Row justify="space-between">
+          <Col flex={1}>
             <h2> Calendar</h2>
             <div className="site-calendar-demo-card">
               <Calendar fullscreen={false} />
             </div>
           </Col>
-          <Col flex="auto">
-            <h2> Popular Courses</h2>
+          <Col flex={15}>
+            <h2>Popular Courses</h2>
             <List
               itemLayout="horizontal"
-              dataSource={data}
+              dataSource={popularCourses}
               renderItem={(item) => (
                 <List.Item>
                   <List.Item.Meta
-                    avatar={
-                      <Avatar
-                        size="large"
-                        icon={<UserOutlined />}
-                        shape="square"
-                        // src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"
-                      />
+                    title={
+                      <Link to={`/courses/${item._id}`}>
+                        {item.course_title}
+                      </Link>
                     }
-                    title={<a href="">{item.title}</a>}
-                    description="Ant Design, a design language for background applications, is refined by Ant UED Team"
+                    description={item.cat_id.cat_name}
                   />
                 </List.Item>
               )}
             />
           </Col>
-          <Col flex="auto">
+          <Col flex={15}>
             <h2> Recent Courses</h2>
-            <List
+            {/* <List
               itemLayout="horizontal"
               dataSource={data}
               renderItem={(item) => (
@@ -100,51 +85,11 @@ const ContentComponent = () => {
                   />
                 </List.Item>
               )}
-            />
+            /> */}
           </Col>
         </Row>
-
-        {/* <Alert
-          message="Success Tips"
-          description="Detailed description and advice about successful copywriting."
-          type="success"
-          showIcon
-        />
-        <Alert
-          message="Informational Notes"
-          description="Additional description and information about copywriting."
-          type="info"
-          showIcon
-        />
-        <Alert
-          message="Warning"
-          description="This is a warning notice about copywriting."
-          type="warning"
-          showIcon
-          closable
-        />
-        <Alert
-          message="Error"
-          description="This is an error message about copywriting."
-          type="error"
-          showIcon
-        /> */}
-        {/* <Modal
-        title="Sign In"
-        centered
-        visible={this.state.modal1Visible}
-        onOk={() => this.setModal1Visible(false)}
-        onCancel={() => this.setModal1Visible(false)}
-      ></Modal>
-      <Modal
-        title="Sign Up"
-        centered
-        visible={this.state.modal2Visible}
-        onOk={() => this.setModal2Visible(false)}
-        onCancel={() => this.setModal2Visible(false)}
-      ></Modal> */}
       </div>
-    </Content>
+    </div>
   );
 };
 
