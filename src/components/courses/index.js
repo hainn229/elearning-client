@@ -62,8 +62,8 @@ const CoursesComponent = () => {
   const search = async () => {
     const keys = queryString.stringify(filter);
     const result = await axios.get(
-      // `https://api--elearning.herokuapp.com/courses?${keys}`,
-      `http://localhost:4000/courses?${keys}`,
+      `https://api--elearning.herokuapp.com/courses?${keys}`,
+      // `http://localhost:4000/courses?${keys}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -80,8 +80,8 @@ const CoursesComponent = () => {
 
   const getCategories = async () => {
     const result = await axios.get(
-      // `https://api--elearning.herokuapp.com/categories/all`,
-      `http://localhost:4000/categories/all`,
+      `https://api--elearning.herokuapp.com/categories/all`,
+      // `http://localhost:4000/categories/all`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -94,8 +94,8 @@ const CoursesComponent = () => {
   const getCourses = async () => {
     const keys = queryString.stringify(pagination);
     const result = await axios.get(
-      // `https://api--elearning.herokuapp.com/courses?${keys}`,
-      `http://localhost:4000/courses?${keys}`,
+      `https://api--elearning.herokuapp.com/courses?${keys}`,
+      // `http://localhost:4000/courses?${keys}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -105,12 +105,14 @@ const CoursesComponent = () => {
     dispatch({ type: "COURSES", payload: result.data.courses.docs });
   };
 
+  // eslint-disable-next-line no-unused-vars
   const [wishlist, setWishlist] = useState();
+  // eslint-disable-next-line no-unused-vars
   const actionWishlist = async () => {
       if (user._id) {
         const result = await axios.get(
-          // `https://api--elearning.herokuapp.com/wishlists/${userId}`,
-          `http://localhost:4000/wishlists/${user._id}`,
+          `https://api--elearning.herokuapp.com/wishlists/${user._id}`,
+          // `http://localhost:4000/wishlists/${user._id}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -220,8 +222,8 @@ const CoursesComponent = () => {
                     } else {
                       let course_id = item._id;
                       await axios.post(
-                        // `https://api--elearning.herokuapp.com/wishlists/add`,
-                        `http://localhost:4000/wishlists/add`,
+                        `https://api--elearning.herokuapp.com/wishlists/add`,
+                        // `http://localhost:4000/wishlists/add`,
                         {
                           course_id: course_id,
                           user_id: user._id,
@@ -330,8 +332,8 @@ const CoursesComponent = () => {
                         } else {
                           let course_id = item._id;
                           await axios.post(
-                            // `https://api--elearning.herokuapp.com/wishlists/add`,
-                            `http://localhost:4000/wishlists/add`,
+                            `https://api--elearning.herokuapp.com/wishlists/add`,
+                            // `http://localhost:4000/wishlists/add`,
                             {
                               course_id: course_id,
                               user_id: user._id,
@@ -448,8 +450,8 @@ const CoursesComponent = () => {
                           } else {
                             let course_id = item._id;
                             await axios.post(
-                              // `https://api--elearning.herokuapp.com/wishlists/add`,
-                              `http://localhost:4000/wishlists/add`,
+                              `https://api--elearning.herokuapp.com/wishlists/add`,
+                              // `http://localhost:4000/wishlists/add`,
                               {
                                 course_id: course_id,
                                 user_id: user._id,

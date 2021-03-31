@@ -18,14 +18,18 @@ const ContentComponent = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const getPopularCourses = async () => {
     const keys = queryString.stringify(pagination);
-    const result = await axios.get(`http://localhost:4000/courses/popular?${keys}`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const result = await axios.get(
+      `https://api--elearning.herokuapp.com/courses/popular?${keys}`,
+      // `http://localhost:4000/courses/popular?${keys}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     setPopularCourses(result.data.courses.docs);
   };
-  
+
   // console.log(popularCourses);
 
   useEffect(() => {

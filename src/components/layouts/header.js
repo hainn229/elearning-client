@@ -1,11 +1,10 @@
 /* eslint-disable jsx-a11y/img-redundant-alt */
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
-import { useForm } from "react-hook-form";
 import { useHistory, Link } from "react-router-dom";
-import * as yup from "yup";
 
 import Alert from "react-s-alert";
 import "react-s-alert/dist/s-alert-default.css";
@@ -21,57 +20,44 @@ import {
   Popconfirm,
   List,
   Row,
+  Col,
+  Form,
+  Input,
+  Image,
 } from "antd";
-import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  ShoppingCartOutlined,
+  UserOutlined,
+  GoogleOutlined,
+  LoginOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 
 const { Header } = Layout;
 const { SubMenu } = Menu;
+const formSignin = {
+  labelCol: { span: 6, style: { textAlign: "left" } },
+  wrapperCol: {
+    span: 18,
+    style: { marginLeft: 20, marginTop: 10, width: "100%" },
+  },
+};
+const formSignup = {
+  labelCol: { span: 9, style: { textAlign: "left" } },
+  wrapperCol: {
+    span: 16,
+    style: { marginLeft: 20, marginTop: 10, width: "100%" },
+  },
+};
 
-const validateDataSignin = yup.object().shape({
-  email: yup
-    .string()
-    .email("Invalid email address!")
-    .required("Email address is required!"),
-  password: yup.string().required("Password is required!"),
-});
-const validateDataSignup = yup.object().shape({
-  full_name: yup.string().required("Full name is required!"),
-  email: yup
-    .string()
-    .email("Invalid email address!")
-    .required("Email address is required!"),
-  password: yup
-    .string()
-    .min(6, "Minimum password length is six characters")
-    .required("Password is required!"),
-  re_password: yup
-    .string()
-    .min(6, "Minimum password length is six characters")
-    .oneOf([yup.ref("password")], "Repeat password do not match!")
-    .required("Password is required!"),
-});
-
-// const validateDataSignup = yup.object().shape({
-//   full_name: yup.string().required(),
-//   email: yup.string().email().required(),
-//   password: yup.string().min(6).required(),
-//   re_password: yup
-//     .string()
-//     .min(6)
-//     .oneOf([yup.ref("password")])
-//     .required(),
-// });
+const btn = {
+  wrapperCol: { offset: 6 },
+};
 
 const HeaderComponent = () => {
   useAuth();
   const history = useHistory();
   const dispatch = useDispatch();
-
-  // onSubmit Sign In
-  const { register, handleSubmit } = useForm();
-
-  // onSubmit Sign Up
-  const { register: signin, handleSubmit: handleSubmitSignin } = useForm();
 
   const [isModal1Visible, setIsModal1Visible] = useState(false);
   const [isModal2Visible, setIsModal2Visible] = useState(false);
@@ -88,81 +74,29 @@ const HeaderComponent = () => {
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
+  // eslint-disable-next-line no-unused-vars
   const userId = user._id;
 
-  const onSubmitSignin = async (dataInput) => {
-    const result = await axios.post(
-      // `https://api--elearning.herokuapp.com/auth/login`,
-      `http://localhost:4000/auth/login`,
-      {
-        email: dataInput.email,
-        password: dataInput.password,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
+  const onFinishSignin = async (dataInput) => {
+    try {
+      const result = await axios.post(
+        `https://api--elearning.herokuapp.com/auth/login`,
+        // `http://localhost:4000/auth/login`,
+        {
+          email: dataInput.email,
+          password: dataInput.password,
         },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (result.data) {
+        localStorage.setItem("token", result.data.token);
+        setIsModal1Visible(false);
+        dispatch({ type: "LOGIN_DATA", payload: result.data.user });
       }
-    );
-    if (result.data) {
-      localStorage.setItem("token", result.data.token);
-      setIsModal1Visible(false);
-      dispatch({ type: "LOGIN_DATA", payload: result.data.user });
-    }
-    Alert.success(
-      `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
-      {
-        html: true,
-        position: "top-right",
-        effect: "bouncyflip",
-      }
-    );
-    return history.push();
-  };
-
-  const onSubmitSignup = async (dataSignup) => {
-    const result = await axios.post(
-      // `https://api--elearning.herokuapp.com/auth/register`,
-      `http://localhost:4000/auth/register`,
-      {
-        full_name: dataSignup.full_name,
-        email: dataSignup.email,
-        password: dataSignup.password,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (result.status === 200) {
-      setIsModal2Visible(false);
-    }
-    Alert.success(`<div role="alert"> ${result.data.message}</div>`, {
-      html: true,
-      position: "top-right",
-      effect: "bouncyflip",
-    });
-    return history.push();
-  };
-
-  const responseGoogle = async (response) => {
-    const result = await axios.post(
-      // `https://api--elearning.herokuapp.com/auth/google`,
-      `http://localhost:4000/auth/google`,
-      {
-        access_token: response.accessToken,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (result.status === 200) {
-      localStorage.setItem("token", result.data.token);
-      dispatch({ type: "LOGIN_DATA", payload: result.data.user });
-      setIsModal1Visible(false);
       Alert.success(
         `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
         {
@@ -172,6 +106,92 @@ const HeaderComponent = () => {
         }
       );
       return history.push();
+    } catch (error) {
+      return Alert.error(
+        `<div role="alert">${error.response.data.message}</div>`,
+        {
+          html: true,
+          position: "top-right",
+          effect: "bouncyflip",
+        }
+      );
+    }
+  };
+
+  const onFinishSignup = async (dataSignup) => {
+    try {
+      const result = await axios.post(
+        `https://api--elearning.herokuapp.com/auth/register`,
+        // `http://localhost:4000/auth/register`,
+        {
+          full_name: dataSignup.full_name,
+          email: dataSignup.email,
+          password: dataSignup.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (result.status === 200) {
+        setIsModal2Visible(false);
+      }
+      Alert.success(`<div role="alert"> ${result.data.message}</div>`, {
+        html: true,
+        position: "top-right",
+        effect: "bouncyflip",
+      });
+      return history.push();
+    } catch (error) {
+      return Alert.error(
+        `<div role="alert">${error.response.data.message}</div>`,
+        {
+          html: true,
+          position: "top-right",
+          effect: "bouncyflip",
+        }
+      );
+    }
+  };
+
+  const responseGoogle = async (response) => {
+    try {
+      const result = await axios.post(
+        `https://api--elearning.herokuapp.com/auth/google`,
+        // `http://localhost:4000/auth/google`,
+        {
+          access_token: response.accessToken,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (result.status === 200) {
+        localStorage.setItem("token", result.data.token);
+        dispatch({ type: "LOGIN_DATA", payload: result.data.user });
+        setIsModal1Visible(false);
+        Alert.success(
+          `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
+          {
+            html: true,
+            position: "top-right",
+            effect: "bouncyflip",
+          }
+        );
+        return history.push();
+      }
+    } catch (error) {
+      return Alert.error(
+        `<div role="alert">${error.response.data.message}</div>`,
+        {
+          html: true,
+          position: "top-right",
+          effect: "bouncyflip",
+        }
+      );
     }
   };
   const signOut = async () => {
@@ -304,10 +324,7 @@ const HeaderComponent = () => {
                   <Menu.Item style={{ textAlign: "center" }} key="setting:3">
                     <Link to={`/user/library`}>My Library</Link>
                   </Menu.Item>
-                  <Menu.Item style={{ textAlign: "center" }} key="setting:4">
-                    <Link to={`/tutor/dashboard`}>Teach on Elearning</Link>
-                  </Menu.Item>
-                  <Menu.Item style={{ marginBottom: 20 }} key="setting:5">
+                  <Menu.Item style={{ marginBottom: 20 }} key="setting:4">
                     <Button
                       style={{ width: "100%" }}
                       type="primary"
@@ -316,7 +333,7 @@ const HeaderComponent = () => {
                         signOut();
                       }}
                     >
-                      Sign Out
+                      <LogoutOutlined /> Sign Out
                     </Button>
                   </Menu.Item>
                 </SubMenu>
@@ -365,203 +382,228 @@ const HeaderComponent = () => {
       </Row>
       <Modal
         centered={true}
-        width="70%"
+        width={900}
         visible={isModal1Visible}
         onCancel={() => setIsModal1Visible(false)}
         footer={null}
       >
-        <div className="signin-content">
-          <div className="signin-image">
-            <figure>
-              <img
-                src="https://storage.googleapis.com/elearning-305907.appspot.com/images/signin-image.jpg"
-                alt="sign in image"
-              />
-            </figure>
-            <p className="signup-image-link">
-              <Button
-                type="link"
-                onClick={() => {
-                  setIsModal1Visible(false);
-                  dispatch({ type: "MODAL_STATUS", payload: false });
-                  setIsModal2Visible(true);
-                }}
-              >
-                Create an account!
-              </Button>
-            </p>
-          </div>
-          <div className="signin-form">
-            <h2 className="form-title">Sign in</h2>
-            <form
-              defaultValue={defaultValSignin}
-              key={1}
-              className="register-form"
-              onSubmit={handleSubmitSignin(onSubmitSignin)}
+        <Row
+          justify="center"
+          align="middle"
+          style={{ marginTop: 50, marginBottom: 50 }}
+        >
+          <Col>
+            <Image
+              src="https://storage.googleapis.com/elearning-305907.appspot.com/images/signin-image.jpg"
+              preview={false}
+              alt="Sign In Image"
+              width={400}
+            />
+            <br />
+            <Button
+              type="link"
+              onClick={() => {
+                setIsModal1Visible(false);
+                setIsModal2Visible(true);
+              }}
+              style={{ marginLeft: "30%" }}
             >
-              <div className="form-group">
-                <label htmlFor="email">
-                  <i className="zmdi zmdi-email" />
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="E-mail Address"
-                  ref={signin}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="password">
-                  <i className="zmdi zmdi-lock" />
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  ref={signin}
-                />
-              </div>
-              <div className="form-group">
-                <input
-                  type="checkbox"
-                  name="remember-me"
-                  className="agree-term"
-                />
-                <label htmlFor="remember-me" className="label-agree-term">
-                  <span>
-                    <span />
-                  </span>
-                  Remember me
-                </label>
-              </div>
-              <div className="form-group form-button">
-                <input
-                  className="form-submit"
-                  name="signin"
-                  id="signin"
-                  type="submit"
-                  value="Sign In"
-                />
-              </div>
-            </form>
-            <div className="social-login">
-              <span className="social-label" style={{ fontSize: 15 }}>
-                Or login with
-              </span>
-              <ul className="socials">
-                <li>
-                  <GoogleLogin
-                    clientId="998093637270-hhqclmlctiv0cakc2qeduofotciaaetk.apps.googleusercontent.com"
-                    onSuccess={responseGoogle}
-                    onFailure={responseGoogle}
-                    cookiePolicy={"single_host_origin"}
-                    buttonText="Google"
-                  />
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+              Create an account !
+            </Button>
+          </Col>
+          <Col style={{ marginLeft: 30 }}>
+            <Form
+              {...formSignin}
+              name="basic"
+              initialValues={{ remember: true }}
+              onFinish={onFinishSignin}
+              // onFinishFailed={onFinishFailed}
+              // eslint-disable-next-line react/jsx-no-duplicate-props
+              initialValues={defaultValSignin}
+            >
+              <h1 style={{ textAlign: "center" }}>Sign In</h1>
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[
+                  {
+                    type: "email",
+                    required: true,
+                    message: "Please input your email address!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                label="Password"
+                name="password"
+                rules={[
+                  { required: true, message: "Please input your password!" },
+                ]}
+              >
+                <Input.Password />
+              </Form.Item>
+
+              <Form.Item {...btn}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  style={{ marginLeft: 20, width: 100 }}
+                >
+                  <LoginOutlined /> Sign In
+                </Button>
+              </Form.Item>
+            </Form>
+            <p style={{ textAlign: "center" }}>Or </p>
+            <GoogleLogin
+              icon={false}
+              clientId="998093637270-hhqclmlctiv0cakc2qeduofotciaaetk.apps.googleusercontent.com"
+              onSuccess={responseGoogle}
+              onFailure={responseGoogle}
+              cookiePolicy={"single_host_origin"}
+              render={(renderProps) => (
+                <>
+                  <Button
+                    type="primary"
+                    danger
+                    onClick={renderProps.onClick}
+                    style={{ marginLeft: 50, height: 40, fontSize: 16 }}
+                    shape="round"
+                  >
+                    <GoogleOutlined /> Sign In With Google
+                  </Button>
+                </>
+              )}
+            />
+          </Col>
+        </Row>
       </Modal>
       <Modal
         centered={true}
-        width="70%"
+        width={1000}
         visible={isModal2Visible}
         onCancel={() => setIsModal2Visible(false)}
         footer={null}
       >
-        <div className="signup-content">
-          <div className="signup-form">
-            <h2 className="form-title">Sign Up</h2>
-            <form
-              defaultValue={defaultValSignup}
-              key={2}
-              className="register-form"
-              id="register-form"
-              onSubmit={handleSubmit(onSubmitSignup)}
+        <Row
+          justify="center"
+          align="middle"
+          style={{ marginTop: 60, marginBottom: 60 }}
+        >
+          <Col>
+            <Form
+              {...formSignup}
+              name="basic"
+              initialValues={{ remember: true }}
+              onFinish={onFinishSignup}
+              // onFinishFailed={onFinishFailed}
+              // eslint-disable-next-line react/jsx-no-duplicate-props
+              initialValues={defaultValSignup}
             >
-              <div className="form-group">
-                <label htmlFor="full_name">
-                  <i className="zmdi zmdi-account material-icons-name" />
-                </label>
-                <input
-                  type="text"
-                  name="full_name"
-                  id="full_name"
-                  placeholder="Full name"
-                  ref={register({ required: true })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="email">
-                  <i className="zmdi zmdi-email" />
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  placeholder="Email address"
-                  ref={register({ required: true })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="password">
-                  <i className="zmdi zmdi-lock" />
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  placeholder="Password"
-                  ref={register({ required: true })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="re-password">
-                  <i className="zmdi zmdi-lock-outline" />
-                </label>
-                <input
-                  type="password"
-                  name="re_password"
-                  id="re_password"
-                  placeholder="Repeat password"
-                  required
-                />
-              </div>
-              <div className="form-group form-button">
-                <input
-                  type="submit"
-                  name="signup"
-                  id="signup"
-                  className="form-submit"
-                  value="Sign Up"
-                />
-              </div>
-            </form>
-          </div>
-          <div className="signup-image">
-            <figure>
-              <img
-                src="https://storage.googleapis.com/elearning-305907.appspot.com/images/signup-image.jpg"
-                alt="sing up image"
-              />
-            </figure>
-            <p className="signup-image-link">
-              <Button
-                type="link"
-                onClick={() => {
-                  setIsModal2Visible(false);
-                  setIsModal1Visible(true);
-                }}
+              <h1 style={{ textAlign: "center" }}>Sign Up</h1>
+              <Form.Item
+                label="Full Name"
+                name="full_name"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please input your full name",
+                  },
+                ]}
               >
-                I already have an account!
-              </Button>
-            </p>
-          </div>
-        </div>
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[
+                  {
+                    type: "email",
+                    required: true,
+                    message: "Please input your email address!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                name="password"
+                label="Password"
+                rules={[
+                  {
+                    mix: 6,
+                    required: true,
+                    message:
+                      "Please input your password, minimum is 6 characters!",
+                  },
+                ]}
+                hasFeedback
+              >
+                <Input.Password />
+              </Form.Item>
+
+              <Form.Item
+                name="re_password"
+                label="Confirm Password"
+                dependencies={["password"]}
+                hasFeedback
+                rules={[
+                  {
+                    required: true,
+                    message: "Please confirm your password!",
+                  },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue("password") === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error(
+                          "The two passwords that you entered do not match!"
+                        )
+                      );
+                    },
+                  }),
+                ]}
+              >
+                <Input.Password />
+              </Form.Item>
+
+              <Form.Item {...btn}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  style={{ marginLeft: 20, width: 100 }}
+                >
+                  Sign Up
+                </Button>
+              </Form.Item>
+            </Form>
+          </Col>
+          <Col style={{ marginLeft: 30 }}>
+            <Image
+              src="https://storage.googleapis.com/elearning-305907.appspot.com/images/signup-image.jpg"
+              preview={false}
+              alt="Sign In Image"
+              width={400}
+            />
+            <br />
+            <Button
+              type="link"
+              onClick={() => {
+                setIsModal2Visible(false);
+                setIsModal1Visible(true);
+              }}
+              style={{ marginLeft: "25%" }}
+            >
+              I already have an account !
+            </Button>
+          </Col>
+        </Row>
       </Modal>
     </Header>
   );

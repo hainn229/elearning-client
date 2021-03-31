@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useHistory, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+// eslint-disable-next-line no-unused-vars
 import { useForm } from "react-hook-form";
 import axios from "axios";
 
@@ -10,6 +11,7 @@ import "react-s-alert/dist/s-alert-default.css";
 import "react-s-alert/dist/s-alert-css-effects/bouncyflip.css";
 
 import {
+  // eslint-disable-next-line no-unused-vars
   PlusOutlined,
   HeartOutlined,
   UploadOutlined,
@@ -61,7 +63,8 @@ const MyAccountComponent = () => {
   const [urlAvt, setUrlAvt] = useState();
   const onSubmitUpdate = async (updateInfo) => {
     await axios.put(
-      `http://localhost:4000/auth/${userId}`,
+      `https://api--elearning.herokuapp.com/auth/${userId}`,
+      // `http://localhost:4000/auth/${userId}`,
       {
         full_name: updateInfo.full_name,
         gender: updateInfo.gender,
@@ -86,7 +89,8 @@ const MyAccountComponent = () => {
     const formData = new FormData();
     formData.append("image", file);
     const result = await axios.post(
-      `http://localhost:4000/upload/images`,
+      `https://api--elearning.herokuapp.com/upload/images`,
+      // `http://localhost:4000/upload/images`,
       formData,
       {
         headers: {
@@ -99,9 +103,11 @@ const MyAccountComponent = () => {
 
   const onSubmitUpdatePassword = async (updateInfo) => {
     await axios.put(
-      `http://localhost:4000/auth/${userId}`,
+      `https://api--elearning.herokuapp.com/auth/updatePassword`,
+      // `http://localhost:4000/auth/updatePassword`,
       {
-        password: updateInfo.new_password,
+        cur_password: updateInfo.cur_password,
+        new_password: updateInfo.new_password,
       },
       {
         headers: {
@@ -110,7 +116,7 @@ const MyAccountComponent = () => {
       }
     );
     Alert.success(
-      `<div role="alert">Password Has Been Changed Successfully !</div>`,
+      `<div role="alert">Password Has Been Updated Successfully !</div>`,
       {
         html: true,
         position: "top-right",
@@ -221,6 +227,21 @@ const MyAccountComponent = () => {
             {user.password ? (
               <TabPane tab={<h6>Change Password</h6>} key="2">
                 <Form {...form} name="basic" onFinish={onSubmitUpdatePassword}>
+                  <Form.Item
+                    label="Current Password"
+                    name="cur_password"
+                    hasFeedback
+                    rules={[
+                      {
+                        min: 6,
+                        required: true,
+                        message: "Please input your current password !",
+                      },
+                    ]}
+                  >
+                    <Input.Password allowClear />
+                  </Form.Item>
+
                   <Form.Item
                     label="New Password"
                     name="new_password"

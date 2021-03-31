@@ -74,8 +74,8 @@ const DetailsCourseComponent = (props) => {
 
   const getDetailsCourse = async (courseID) => {
     const result = await axios.get(
-      // `https://api--elearning.herokuapp.com/courses/${courseID}`,
-      `http://localhost:4000/courses/${courseID}`,
+      `https://api--elearning.herokuapp.com/courses/${courseID}`,
+      // `http://localhost:4000/courses/${courseID}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -89,8 +89,8 @@ const DetailsCourseComponent = (props) => {
   const getComments = async () => {
     const paramsKey = queryString.stringify(pagination);
     const result = await axios.get(
-      // `https://api--elearning.herokuapp.com/comments/${courseID}?${paramsKey}`,
-      `http://localhost:4000/comments/${courseID}?${paramsKey}`,
+      `https://api--elearning.herokuapp.com/comments/${courseID}?${paramsKey}`,
+      // `http://localhost:4000/comments/${courseID}?${paramsKey}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -227,8 +227,8 @@ const DetailsCourseComponent = (props) => {
                         } else {
                           const userId = user._id;
                           await axios.post(
-                            // `https://api--elearning.herokuapp.com/comments/add`,
-                            `http://localhost:4000/comments/add`,
+                            `https://api--elearning.herokuapp.com/comments/add`,
+                            // `http://localhost:4000/comments/add`,
                             {
                               course_id: courseID,
                               user_id: userId,
@@ -284,8 +284,8 @@ const DetailsCourseComponent = (props) => {
                                   onClick={async () => {
                                     let commentId = item._id;
                                     await axios.delete(
-                                      // `https://api--elearning.herokuapp.com/comments/${commentId}`,
-                                      `http://localhost:4000/comments/${commentId}`,
+                                      `https://api--elearning.herokuapp.com/comments/${commentId}`,
+                                      // `http://localhost:4000/comments/${commentId}`,
                                       {
                                         headers: {
                                           "Content-Type": "application/json",
@@ -373,8 +373,8 @@ const DetailsCourseComponent = (props) => {
                                     let commentId = item._id;
                                     let userId = user._id;
                                     await axios.put(
-                                      // `https://api--elearning.herokuapp.com/comments/${commentId}`,
-                                      `http://localhost:4000/comments/${commentId}`,
+                                      `https://api--elearning.herokuapp.com/comments/${commentId}`,
+                                      // `http://localhost:4000/comments/${commentId}`,
                                       {
                                         course_id: courseID,
                                         user_id: userId,

@@ -42,8 +42,8 @@ const LearningComponent = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const getDetailsCourse = async () => {
     const result = await axios.get(
-      // `https://api--elearning.herokuapp.com/courses/${courseID}`,
-      `http://localhost:4000/courses/${courseID}`,
+      `https://api--elearning.herokuapp.com/courses/${courseID}`,
+      // `http://localhost:4000/courses/${courseID}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -83,8 +83,8 @@ const LearningComponent = (props) => {
   const getComments = async () => {
     const paramsKey = queryString.stringify(pagination);
     const result = await axios.get(
-      // `https://api--elearning.herokuapp.com/comments/${courseID}?${paramsKey}`,
-      `http://localhost:4000/comments/${courseID}?${paramsKey}`,
+      `https://api--elearning.herokuapp.com/comments/${courseID}?${paramsKey}`,
+      // `http://localhost:4000/comments/${courseID}?${paramsKey}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -109,7 +109,8 @@ const LearningComponent = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const getContentDetails = async () => {
     const result = await axios.get(
-      `http://localhost:4000/contents/${courseID}`,
+      `https://api--elearning.herokuapp.com/contents/${courseID}`,
+      // `http://localhost:4000/contents/${courseID}`,
       {
         headers: {
           "Content-Type": "application/json",

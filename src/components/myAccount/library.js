@@ -39,8 +39,8 @@ const LibraryComponent = () => {
   const getWishlist = async (userId) => {
     if (userId) {
       const result = await axios.get(
-        // `https://api--elearning.herokuapp.com/wishlists/${userId}`,
-        `http://localhost:4000/wishlists/${userId}`,
+        `https://api--elearning.herokuapp.com/wishlists/${userId}`,
+        // `http://localhost:4000/wishlists/${userId}`,
         {
           headers: {
             "Content-Type": "application/json",
