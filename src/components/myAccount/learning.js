@@ -1,14 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link, useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import queryString from "query-string";
-
-import Alert from "react-s-alert";
-import "react-s-alert/dist/s-alert-default.css";
-import "react-s-alert/dist/s-alert-css-effects/bouncyflip.css";
 
 import InfiniteScroll from "react-infinite-scroller";
 import { Player, BigPlayButton } from "video-react";
@@ -24,29 +21,28 @@ import {
   Divider,
   Tabs,
   Form,
-  Progress,
   Rate,
   Comment,
   Tooltip,
+  message,
 } from "antd";
 const { TabPane } = Tabs;
 const desc = [1, 2, 3, 4, 5];
 const LearningComponent = (props) => {
   useAuth();
-  const history = useHistory();
+  const jwt = localStorage.getItem("token");
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
   const courseID = props.courseId;
   const [courseDetails, setCourseDetails] = useState();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const getDetailsCourse = async () => {
     const result = await axios.get(
-      `https://api--elearning.herokuapp.com/courses/${courseID}`,
-      // `http://localhost:4000/courses/${courseID}`,
+      `http://localhost:4000/courses/${courseID}`,
       {
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + jwt,
         },
       }
     );
@@ -79,54 +75,115 @@ const LearningComponent = (props) => {
   const handleChangeRateUpdate = (value) => {
     setRateUpdate(value);
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const getComments = async () => {
-    const paramsKey = queryString.stringify(pagination);
-    const result = await axios.get(
-      `https://api--elearning.herokuapp.com/comments/${courseID}?${paramsKey}`,
-      // `http://localhost:4000/comments/${courseID}?${paramsKey}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
+    try {
+      const paramsKey = queryString.stringify(pagination);
+      const result = await axios.get(
+        `http://localhost:4000/comments/${courseID}?${paramsKey}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + jwt,
+          },
+        }
+      );
+      if (result.status === 200) {
+        setTotalItems(result.data.totalItems);
+        setComment(result.data.comments);
+      } else {
+        return message.error(result.data.message);
       }
-    );
-    setTotalItems(result.data.totalItems);
-    setComment(result.data.comments);
+    } catch (error) {
+      if (error.response) {
+        return message.error(error.response.data.message);
+      } else {
+        return message.error(error.message);
+      }
+    }
   };
+  const [actionsStatus, setActionsStatus] = useState(false);
   useEffect(() => {
     getComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination]);
+  }, [pagination, actionsStatus]);
+
   useEffect(() => {
     getDetailsCourse(courseID);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseID]);
 
   const [contents, setContents] = useState();
   const [lectureName, setLectureName] = useState();
   const [urlContent, setUrlContent] = useState();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const getContentDetails = async () => {
-    const result = await axios.get(
-      `https://api--elearning.herokuapp.com/contents/${courseID}`,
-      // `http://localhost:4000/contents/${courseID}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
+    try {
+      const result = await axios.get(
+        `http://localhost:4000/contents/${courseID}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + jwt,
+          },
+        }
+      );
+      if (result.status === 200) {
+        setContents(result.data.contents);
+        setLectureName(result.data.contents[0].title);
+        setUrlContent(result.data.contents[0].url);
+      } else {
+        return message.error(result.data.message);
       }
-    );
-    setContents(result.data.contents);
-    setLectureName(result.data.contents[0].title);
-    setUrlContent(result.data.contents[0].url);
+    } catch (error) {
+      if (error.response) {
+        return message.error(error.response.data.message);
+      } else {
+        return message.error(error.message);
+      }
+    }
   };
 
   useEffect(() => {
     getContentDetails();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseID]);
 
+  const addComment = async (commentData) => {
+    if (!user._id) {
+      return message.warning(`You need to be signed in to use this feature!`);
+    } else {
+      if (commentData.point === "" || commentData.description === "") {
+        return message.warning(`Please fill in all the information!`);
+      } else {
+        try {
+          const userId = user._id;
+          const result = await axios.post(
+            `http://localhost:4000/comments/add`,
+            {
+              course_id: courseID,
+              user_id: userId,
+              point: commentData.rate,
+              description: commentData.description,
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + jwt,
+              },
+            }
+          );
+          if (result.status === 200) {
+            setActionsStatus(!actionsStatus);
+            return message.success(`Add comment successfully!`);
+          } else {
+            return message.error(result.data.message);
+          }
+        } catch (error) {
+          if (error.response) {
+            return message.error(error.response.data.message);
+          } else {
+            return message.error(error.message);
+          }
+        }
+      }
+    }
+  };
   return (
     <>
       <br />
@@ -150,7 +207,7 @@ const LearningComponent = (props) => {
           </Col>
         </Row>
         <div className="site-layout-content" style={{ width: "100%" }}>
-          <Row>
+          {/* <Row>
             <Col flex="70%">
               <h3>Lecture: {lectureName}</h3>
             </Col>
@@ -163,10 +220,11 @@ const LearningComponent = (props) => {
               />{" "}
               Progress: 75 of 100 complete
             </Col>
-          </Row>
+          </Row> */}
           <br />
           <Row>
             <Col flex="70%">
+              <h3>Lecture: {lectureName}</h3>
               <Player
                 // playsInline
                 src={urlContent}
@@ -174,12 +232,7 @@ const LearningComponent = (props) => {
               >
                 <BigPlayButton position="center" />
               </Player>
-              <Tabs
-                defaultActiveKey="1"
-                // onChange={() => {
-                //   console.log("1");
-                // }}
-              >
+              <Tabs defaultActiveKey="1">
                 <TabPane tab="Overview" key="1">
                   {courseDetails !== undefined ? (
                     <>
@@ -215,27 +268,23 @@ const LearningComponent = (props) => {
                       required
                       tooltip="This is a required field"
                     >
-                      <span>
-                        <Rate
-                          tooltips={desc}
-                          onChange={handleChangeRate}
-                          value={rate}
-                        />
-                        {rate ? (
-                          <span className="ant-rate-text">
-                            {desc[rate - 1]}
-                          </span>
-                        ) : (
-                          ""
-                        )}
-                        <input
-                          style={{ display: "none" }}
-                          type="number"
-                          name="rate"
-                          ref={register}
-                          value={rate}
-                        />
-                      </span>
+                      <Rate
+                        tooltips={desc}
+                        onChange={handleChangeRate}
+                        value={rate}
+                      />
+                      {rate ? (
+                        <span className="ant-rate-text">{desc[rate - 1]}</span>
+                      ) : (
+                        ""
+                      )}
+                      <input
+                        style={{ display: "none" }}
+                        type="number"
+                        name="rate"
+                        ref={register}
+                        value={rate}
+                      />
                     </Form.Item>
                     <Form.Item
                       label="Description"
@@ -253,44 +302,7 @@ const LearningComponent = (props) => {
                       <Button
                         style={{ width: "100%" }}
                         type="primary"
-                        onClick={handleSubmit(async (commentData) => {
-                          if (!user._id) {
-                            return Alert.error(
-                              `<div role="alert"> You need to be signed in to use this feature!</div>`,
-                              {
-                                html: true,
-                                position: "top-right",
-                                effect: "bouncyflip",
-                              }
-                            );
-                          } else {
-                            const userId = user._id;
-                            await axios.post(
-                              // `https://api--elearning.herokuapp.com/comments/add`,
-                              `http://localhost:4000/comments/add`,
-                              {
-                                course_id: courseID,
-                                user_id: userId,
-                                point: commentData.rate,
-                                description: commentData.description,
-                              },
-                              {
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                              }
-                            );
-                            Alert.success(
-                              `<div role="alert"> Add comment successfully! </div>`,
-                              {
-                                html: true,
-                                position: "top-right",
-                                effect: "bouncyflip",
-                              }
-                            );
-                            return history.go();
-                          }
-                        })}
+                        onClick={handleSubmit(addComment)}
                       >
                         Add Comment
                       </Button>
@@ -300,59 +312,59 @@ const LearningComponent = (props) => {
                 <Col flex="auto" style={{ marginLeft: 15 }}>
                   <List
                     className="comment-list"
-                    header={totalItems + " replies"}
+                    header={totalItems + " comments"}
                     itemLayout="horizontal"
                     dataSource={comment}
                     renderItem={(item) => (
                       <li>
                         <Comment
                           actions={
-                            user._id === item.user_id._id
-                              ? [
-                                  <span
-                                    onClick={() =>
-                                      setStatus({
-                                        id: item._id,
-                                        stt: false,
-                                      })
-                                    }
-                                  >
-                                    Edit
-                                  </span>,
-                                  <span
-                                    onClick={async () => {
-                                      let commentId = item._id;
-                                      await axios.delete(
-                                        // `https://api--elearning.herokuapp.com/comments/${commentId}`,
-                                        `http://localhost:4000/comments/${commentId}`,
-                                        {
-                                          headers: {
-                                            "Content-Type": "application/json",
-                                          },
-                                        }
-                                      );
-                                      Alert.success(
-                                        `<div role="alert"> Delete comment successfully! </div>`,
-                                        {
-                                          html: true,
-                                          position: "top-right",
-                                          effect: "bouncyflip",
-                                        }
-                                      );
-                                      return history.go();
-                                    }}
-                                  >
-                                    Delete
-                                  </span>,
-                                ]
+                            user.email
+                              ? user._id === item.user_id._id
+                                ? [
+                                    <span
+                                      onClick={() =>
+                                        setStatus({
+                                          id: item._id,
+                                          stt: false,
+                                        })
+                                      }
+                                    >
+                                      Edit
+                                    </span>,
+                                    <span
+                                      onClick={async () => {
+                                        let commentId = item._id;
+                                        await axios.delete(
+                                          `http://localhost:4000/comments/${commentId}`,
+                                          {
+                                            headers: {
+                                              "Content-Type":
+                                                "application/json",
+                                              Authorization: "Bearer " + jwt,
+                                            },
+                                          }
+                                        );
+                                        setActionsStatus(!actionsStatus);
+                                        return message.success(
+                                          `Delete comment successfully! `
+                                        );
+                                      }}
+                                    >
+                                      Delete
+                                    </span>,
+                                  ]
+                                : []
                               : []
                           }
-                          author={item.user_id.full_name}
+                          author={item.user_id ? item.user_id.full_name : ""}
                           avatar={
-                            item.user_id.avatarUrl === null ? (
+                            item.user_id === null ? (
                               <UserOutlined style={{ fontSize: 30 }} />
-                            ) : (
+                            ) : item.user_id.avatarUrl ? (
                               item.user_id.avatarUrl
+                            ) : (
+                              <UserOutlined style={{ fontSize: 30 }} />
                             )
                           }
                           content={
@@ -410,34 +422,40 @@ const LearningComponent = (props) => {
                                     type="primary"
                                     onClick={handleSubmit1(
                                       async (updateData) => {
-                                        let commentId = item._id;
-                                        let userId = user._id;
-                                        await axios.put(
-                                          // `https://api--elearning.herokuapp.com/comments/${commentId}`,
-                                          `http://localhost:4000/comments/${commentId}`,
-                                          {
-                                            course_id: courseID,
-                                            user_id: userId,
-                                            point: updateData.rateUpdate,
-                                            description: updateData.description,
-                                          },
-                                          {
-                                            headers: {
-                                              "Content-Type":
-                                                "application/json",
+                                        try {
+                                          let commentId = item._id;
+                                          let userId = user._id;
+                                          await axios.put(
+                                            `http://localhost:4000/comments/${commentId}`,
+                                            {
+                                              course_id: courseID,
+                                              user_id: userId,
+                                              point: updateData.rateUpdate,
+                                              description:
+                                                updateData.description,
                                             },
+                                            {
+                                              headers: {
+                                                "Content-Type":
+                                                  "application/json",
+                                                Authorization: "Bearer " + jwt,
+                                              },
+                                            }
+                                          );
+                                          setActionsStatus(!actionsStatus);
+                                          setStatus(true);
+                                          return message.success(
+                                            ` Update comment successfully! `
+                                          );
+                                        } catch (error) {
+                                          if (error.response) {
+                                            return message.error(
+                                              error.response.data.message
+                                            );
+                                          } else {
+                                            return message.error(error.message);
                                           }
-                                        );
-                                        setStatus(true);
-                                        Alert.success(
-                                          `<div role="alert"> Update comment successfully! </div>`,
-                                          {
-                                            html: true,
-                                            position: "top-right",
-                                            effect: "bouncyflip",
-                                          }
-                                        );
-                                        return history.go();
+                                        }
                                       }
                                     )}
                                   >

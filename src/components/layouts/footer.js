@@ -19,17 +19,14 @@ const FooterComponent = () => {
         </Col>
         <Col style={{ textAlign: "right", marginLeft:20 }}>
           <p>
-            <Link>Contact</Link>
+            <Link to={`/about`}>About Us</Link>
           </p>
           <p>
-            <Link>Support</Link>
+            <Link to={`/contactAndSupport`}>Contact & Support</Link>
           </p>
-          <p>
-            <Link>About Us</Link>
-          </p>
-          <p>
+          {/* <p>
             <Link>Follow Us in Facebook</Link>
-          </p>
+          </p> */}
         </Col>
       </Row>
       <Row justify="center" align="top">

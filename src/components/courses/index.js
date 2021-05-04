@@ -4,16 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import queryString from "query-string";
 import axios from "axios";
-
-import Alert from "react-s-alert";
-import "react-s-alert/dist/s-alert-default.css";
-import "react-s-alert/dist/s-alert-css-effects/bouncyflip.css";
-import {
-  PlusOutlined,
-  HeartOutlined,
-  StarOutlined,
-  MessageOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, HeartOutlined } from "@ant-design/icons";
 import {
   Breadcrumb,
   Row,
@@ -23,28 +14,23 @@ import {
   List,
   Card,
   Button,
-  Space,
   Divider,
+  message,
+  Image,
 } from "antd";
 
 const { Meta } = Card;
 const { TabPane } = Tabs;
 
-const IconText = ({ icon, text }) => (
-  <Space>
-    {React.createElement(icon)}
-    {text}
-  </Space>
-);
-
 const { Search } = Input;
 
 const CoursesComponent = () => {
   const dispatch = useDispatch();
+  const jwt = localStorage.getItem("token");
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
-  const [wishlistStatus, setWishlistStatus] = useState(false);
+
   const [pagination, setPagination] = useState({
     currentPage: 1,
     limitPage: 10,
@@ -54,7 +40,7 @@ const CoursesComponent = () => {
   const [searchResultsData, setSearchResultsData] = useState();
   const [filter, setFilter] = useState({
     keywords: "",
-    tutorId: "",
+    // tutorId: "",
     category: "",
   });
   const [resultsFilter, setResultsFilter] = useState();
@@ -62,16 +48,18 @@ const CoursesComponent = () => {
   const search = async () => {
     const keys = queryString.stringify(filter);
     const result = await axios.get(
-      `https://api--elearning.herokuapp.com/courses?${keys}`,
-      // `http://localhost:4000/courses?${keys}`,
+      `http://localhost:4000/courses/active?${keys}`,
       {
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + jwt,
         },
       }
     );
-    setResultsFilter(result.data.courses.docs);
-    setSearchResultsData(result.data.courses.docs);
+    if (result.status === 200) {
+      setResultsFilter(result.data.courses.docs);
+      setSearchResultsData(result.data.courses.docs);
+    }
   };
 
   useEffect(() => {
@@ -79,49 +67,88 @@ const CoursesComponent = () => {
   }, [filter]);
 
   const getCategories = async () => {
-    const result = await axios.get(
-      `https://api--elearning.herokuapp.com/categories/all`,
-      // `http://localhost:4000/categories/all`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const result = await axios.get(`http://localhost:4000/categories/all`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + jwt,
+      },
+    });
     dispatch({ type: "CATEGORIES", payload: result.data.categories });
   };
 
   const getCourses = async () => {
     const keys = queryString.stringify(pagination);
     const result = await axios.get(
-      `https://api--elearning.herokuapp.com/courses?${keys}`,
-      // `http://localhost:4000/courses?${keys}`,
+      `http://localhost:4000/courses/active?${keys}`,
       {
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + jwt,
         },
       }
     );
     dispatch({ type: "COURSES", payload: result.data.courses.docs });
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const [wishlist, setWishlist] = useState();
-  // eslint-disable-next-line no-unused-vars
-  const actionWishlist = async () => {
-      if (user._id) {
-        const result = await axios.get(
-          `https://api--elearning.herokuapp.com/wishlists/${user._id}`,
-          // `http://localhost:4000/wishlists/${user._id}`,
+  const addToCart = async (id) => {
+    if (user) {
+      try {
+        const response = await axios.post(
+          `http://localhost:4000/orders/add`,
+          {
+            user_id: user._id,
+            course_id: id,
+          },
           {
             headers: {
               "Content-Type": "application/json",
+              Authorization: "Bearer " + jwt,
             },
           }
         );
-        setWishlist(result.data.wishlists);
+        setSttCart(!sttCart);
+        return message.success(response.data.message);
+      } catch (error) {
+        if (error.response) {
+          return message.error(error.response.data.message);
+        } else {
+          return message.error(error.message);
+        }
       }
-  }
+    }
+  };
+  const addToWishlist = async (id) => {
+    try {
+      if (!user) {
+        return message.error(`You need to be signed in to use this feature!`);
+      } else {
+        const response = await axios.post(
+          `http://localhost:4000/wishlists/add`,
+          {
+            user_id: user._id,
+            course_id: id,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + jwt,
+            },
+          }
+        );
+        console.log(response);
+        // setWishlistStatus(!wishlistStatus);
+        return message.success(response.data.message);
+      }
+    } catch (error) {
+      if (error.response) {
+        return message.error(error.response.data.message);
+      } else {
+        return message.error(error.message);
+      }
+    }
+  };
+
+  const [sttCart, setSttCart] = useState(false);
 
   useEffect(() => {
     getCategories();
@@ -159,6 +186,7 @@ const CoursesComponent = () => {
           />
         </Col>
       </Row>
+      {/* SEARCH */}
       <Row className={searchResultsVisible === false ? "searchResults" : ""}>
         <div className="site-layout-content" style={{ width: "100%" }}>
           <Divider orientation="left">
@@ -172,7 +200,10 @@ const CoursesComponent = () => {
             }}
             dataSource={searchResultsData}
             renderItem={(item) => (
-              <List.Item key={item.course_title}>
+              <List.Item
+                key={item.course_title}
+                extra={<Image src={item.poster} width={200} preview={false} />}
+              >
                 <List.Item.Meta
                   title={
                     <Link to={`/courses/${item._id}`}>{item.course_title}</Link>
@@ -181,62 +212,31 @@ const CoursesComponent = () => {
                     <>
                       <h6>Price: ${item.price}</h6>
                       <p>Level: {item.level}</p>
-                      <p>Tutor: {item.tutor_id.full_name}</p>
+                      <p>
+                        Tutor:{" "}
+                        {item.tutor_id ? item.tutor_id.full_name : item.tutor}
+                      </p>
                       <p>Topics: {item.cat_id.cat_name}</p>
                       {item.description}
                       <br />
-                      <IconText
-                        icon={StarOutlined}
-                        text="156"
-                        key="list-vertical-star-o"
-                      />
-                      <span
-                        style={{ marginRight: "10px", marginLeft: "10px" }}
-                      ></span>
-                      <IconText
-                        icon={MessageOutlined}
-                        text="2"
-                        key="list-vertical-message"
-                      />
                     </>
                   }
                 />
                 {item.content}
-                <Button style={{ marginRight: "10px" }} icon={<PlusOutlined />}>
+                <Button
+                  type="primary"
+                  style={{ marginRight: "10px" }}
+                  icon={<PlusOutlined />}
+                  onClick={() => addToCart(item._id)}
+                >
                   Add to Cart
                 </Button>
                 <Button
                   shape="circle"
                   icon={<HeartOutlined />}
+                  type="primary"
                   danger
-                  onClick={async () => {
-                    if (!user._id) {
-                      return Alert.error(
-                        `<div role="alert">You need to be signed in to use this feature!</div>`,
-                        {
-                          html: true,
-                          position: "top-right",
-                          effect: "bouncyflip",
-                        }
-                      );
-                    } else {
-                      let course_id = item._id;
-                      await axios.post(
-                        `https://api--elearning.herokuapp.com/wishlists/add`,
-                        // `http://localhost:4000/wishlists/add`,
-                        {
-                          course_id: course_id,
-                          user_id: user._id,
-                        },
-                        {
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                        }
-                      );
-                      setWishlistStatus(!wishlistStatus);
-                    }
-                  }}
+                  onClick={() => addToWishlist(item._id)}
                 />
               </List.Item>
             )}
@@ -256,7 +256,7 @@ const CoursesComponent = () => {
         >
           <TabPane tab="All Courses" key="All Courses">
             <List
-              grid={{ gutter: 16, column: 4 }}
+              grid={{ gutter: 16, xs: 1, sm: 1, md: 2, lg: 3, xl: 4, xxl: 5 }}
               dataSource={courses}
               renderItem={(item) => (
                 <List.Item>
@@ -268,15 +268,33 @@ const CoursesComponent = () => {
                     }}
                     cover={
                       <img
-                        alt="example"
-                        src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
+                        alt="poster"
+                        src={item.poster}
+                        style={{ width: 300, height: 200 }}
                       />
                     }
                   >
                     <Meta
                       title={
                         <>
-                          <Link to={`/courses/${item._id}`}>
+                          <Link
+                            to={`/courses/${item._id}`}
+                            onClick={async () => {
+                              await axios.post(
+                                `http://localhost:4000/courses/recent/add`,
+                                {
+                                  course_id: item._id,
+                                  user_id: user._id,
+                                },
+                                {
+                                  headers: {
+                                    "Content-type": "application/json",
+                                    Authorization: "Bearer " + jwt,
+                                  },
+                                }
+                              );
+                            }}
+                          >
                             {item.course_title}
                           </Link>
                         </>
@@ -294,59 +312,26 @@ const CoursesComponent = () => {
                           </p>
                           <p>
                             Tutor:{" "}
-                            <a href={`/users/${item.tutor_id._id}`}>
-                              {item.tutor_id.full_name}
-                            </a>
+                            {item.tutor_id
+                              ? item.tutor_id.full_name
+                              : // <Link href={`/users/${item.tutor_id._id}`}>
+                                //   {item.tutor_id.full_name}
+                                // </Link>
+                                item.tutor}
                           </p>
-                          {/* <p>
-                              <IconText
-                                icon={StarOutlined}
-                                text={item.num_of_subscribers}
-                                key="list-vertical-star-o"
-                              />
-                              <span> | </span>
-                              <IconText
-                                icon={MessageOutlined}
-                                text="2"
-                                key="list-vertical-message"
-                              />
-                            </p> */}
                         </>
                       }
                     />
                     <br />
-                    <Button type="primary" icon={<PlusOutlined />}>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => addToCart(item._id)}
+                    >
                       Add to Cart
                     </Button>
                     <Button
-                      onClick={async () => {
-                        if (!user._id) {
-                          return Alert.error(
-                            `<div role="alert">You need to be signed in to use this feature!</div>`,
-                            {
-                              html: true,
-                              position: "top-right",
-                              effect: "bouncyflip",
-                            }
-                          );
-                        } else {
-                          let course_id = item._id;
-                          await axios.post(
-                            `https://api--elearning.herokuapp.com/wishlists/add`,
-                            // `http://localhost:4000/wishlists/add`,
-                            {
-                              course_id: course_id,
-                              user_id: user._id,
-                            },
-                            {
-                              headers: {
-                                "Content-Type": "application/json",
-                              },
-                            }
-                          );
-                          setWishlistStatus(!wishlistStatus);
-                        }
-                      }}
+                      onClick={() => addToWishlist(item._id)}
                       style={{ float: "right" }}
                       shape="circle"
                       icon={<HeartOutlined />}
@@ -376,7 +361,12 @@ const CoursesComponent = () => {
               <List
                 grid={{
                   gutter: 16,
-                  column: 4,
+                  xs: 1,
+                  sm: 1,
+                  md: 2,
+                  lg: 3,
+                  xl: 4,
+                  xxl: 5,
                 }}
                 dataSource={resultsFilter}
                 renderItem={(item) => (
@@ -387,16 +377,28 @@ const CoursesComponent = () => {
                         height: "auto",
                         border: "2px solid whitesmoke",
                       }}
-                      cover={
-                        <img
-                          alt="example"
-                          src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-                        />
-                      }
+                      cover={<img alt="example" src={item.poster} />}
                     >
                       <Meta
                         title={
-                          <Link to={`/courses/${item._id}`}>
+                          <Link
+                            onClick={async () => {
+                              await axios.post(
+                                `http://localhost:4000/courses/recent/add`,
+                                {
+                                  course_id: item._id,
+                                  user_id: user._id,
+                                },
+                                {
+                                  headers: {
+                                    "Content-type": "application/json",
+                                    Authorization: "Bearer " + jwt,
+                                  },
+                                }
+                              );
+                            }}
+                            to={`/courses/${item._id}`}
+                          >
                             {item.course_title}
                           </Link>
                         }
@@ -412,89 +414,35 @@ const CoursesComponent = () => {
                             </p>
                             <p>
                               Tutor:{" "}
-                              <Link to={`/tutor/${item.tutor_id._id}`}>
-                                {item.tutor_id.full_name}
-                              </Link>
+                              {item.tutor_id
+                                ? item.tutor_id.full_name
+                                : // <Link href={`/users/${item.tutor_id._id}`}>
+                                  //   {item.tutor_id.full_name}
+                                  // </Link>
+                                  item.tutor}
                             </p>
-                            {/* <p>
-                                  <IconText
-                                    icon={StarOutlined}
-                                    text={item.num_of_subscribers}
-                                    key="list-vertical-star-o"
-                                  />
-                                  <span> | </span>
-                                  <IconText
-                                    icon={MessageOutlined}
-                                    text="2"
-                                    key="list-vertical-message"
-                                  />
-                                </p> */}
                           </>
                         }
                       />
                       <br />
-                      <Button type="primary" icon={<PlusOutlined />}>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => addToCart(item._id)}
+                      >
                         Add to Cart
                       </Button>
                       <Button
-                        onClick={async () => {
-                          if (!user._id) {
-                            return Alert.error(
-                              `<div role="alert">You need to be signed in to use this feature!</div>`,
-                              {
-                                html: true,
-                                position: "top-right",
-                                effect: "bouncyflip",
-                              }
-                            );
-                          } else {
-                            let course_id = item._id;
-                            await axios.post(
-                              `https://api--elearning.herokuapp.com/wishlists/add`,
-                              // `http://localhost:4000/wishlists/add`,
-                              {
-                                course_id: course_id,
-                                user_id: user._id,
-                              },
-                              {
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                              }
-                            );
-                            setWishlistStatus(!wishlistStatus);
-                          }
-                        }}
+                        onClick={() => addToWishlist(item._id)}
                         style={{ float: "right" }}
                         shape="circle"
                         icon={<HeartOutlined />}
-                        // type={
-                        //   item.wishlist.some(
-                        //     (user_id) => user_id._id === user._id
-                        //   )
-                        //     ? "primary"
-                        //     : ""
-                        // }
                         danger
                       />
                     </Card>
                   </List.Item>
                 )}
               />
-              {/* {resultsFilter.length > 10 ? (
-                <Button
-                  onClick={() =>
-                    setPagination({
-                      ...pagination,
-                      limitPage: pagination.limitPage + 10,
-                    })
-                  }
-                >
-                  More...
-                </Button>
-              ) : (
-                ""
-              )} */}
             </TabPane>
           ))}
         </Tabs>

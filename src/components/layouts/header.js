@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react/jsx-no-duplicate-props */
 /* eslint-disable jsx-a11y/img-redundant-alt */
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from "react";
@@ -6,24 +8,23 @@ import { useAuth } from "../../hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory, Link } from "react-router-dom";
 
-import Alert from "react-s-alert";
-import "react-s-alert/dist/s-alert-default.css";
-import "react-s-alert/dist/s-alert-css-effects/bouncyflip.css";
-
 import GoogleLogin from "react-google-login";
+import { PaypalCheckout } from "../paypal/index";
 import {
   Layout,
   Menu,
   Button,
   Avatar,
   Modal,
-  Popconfirm,
+  Drawer,
   List,
   Row,
   Col,
   Form,
   Input,
   Image,
+  message,
+  Popconfirm,
 } from "antd";
 import {
   ShoppingCartOutlined,
@@ -54,13 +55,14 @@ const btn = {
   wrapperCol: { offset: 6 },
 };
 
-const HeaderComponent = () => {
+const HeaderComponent = (props) => {
   useAuth();
   const history = useHistory();
   const dispatch = useDispatch();
 
-  const [isModal1Visible, setIsModal1Visible] = useState(false);
-  const [isModal2Visible, setIsModal2Visible] = useState(false);
+  const jwt = localStorage.getItem("token");
+  const [isModalSignIn, setIsModalSignIn] = useState(false);
+  const [isModalSignUp, setIsModalSignUp] = useState(false);
   const defaultValSignin = {
     email: "",
     password: "",
@@ -80,8 +82,7 @@ const HeaderComponent = () => {
   const onFinishSignin = async (dataInput) => {
     try {
       const result = await axios.post(
-        `https://api--elearning.herokuapp.com/auth/login`,
-        // `http://localhost:4000/auth/login`,
+        `http://localhost:4000/auth/login`,
         {
           email: dataInput.email,
           password: dataInput.password,
@@ -89,40 +90,43 @@ const HeaderComponent = () => {
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: "Bearer " + jwt,
           },
         }
       );
       if (result.data) {
-        localStorage.setItem("token", result.data.token);
-        setIsModal1Visible(false);
-        dispatch({ type: "LOGIN_DATA", payload: result.data.user });
-      }
-      Alert.success(
-        `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
-        {
-          html: true,
-          position: "top-right",
-          effect: "bouncyflip",
+        if (result.data.user.role === "ADMIN") {
+          return message.error(
+            "Please sign in with an user account!"
+          );
+        } else if (result.data.user.status === false) {
+          return message.error("Your account has been locked!");
+        } else {
+          localStorage.setItem("token", result.data.token);
+          setIsModalSignIn(false);
+          dispatch({ type: "LOGIN_DATA", payload: result.data.user });
+          message.success(
+            `Welcome ${result.data.user.full_name} to Elearning!`,
+            3
+          );
         }
-      );
+      }
       return history.push();
     } catch (error) {
-      return Alert.error(
-        `<div role="alert">${error.response.data.message}</div>`,
-        {
-          html: true,
-          position: "top-right",
-          effect: "bouncyflip",
-        }
-      );
+      if (error.response) {
+        return message.error(`${error.response.data.message}`);
+      } else {
+        return message.error(
+          `Could not a user with an entered email address !`
+        );
+      }
     }
   };
 
   const onFinishSignup = async (dataSignup) => {
     try {
       const result = await axios.post(
-        `https://api--elearning.herokuapp.com/auth/register`,
-        // `http://localhost:4000/auth/register`,
+        `http://localhost:4000/auth/register`,
         {
           full_name: dataSignup.full_name,
           email: dataSignup.email,
@@ -131,35 +135,28 @@ const HeaderComponent = () => {
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: "Bearer " + jwt,
           },
         }
       );
       if (result.status === 200) {
-        setIsModal2Visible(false);
+        setIsModalSignUp(false);
       }
-      Alert.success(`<div role="alert"> ${result.data.message}</div>`, {
-        html: true,
-        position: "top-right",
-        effect: "bouncyflip",
-      });
+      message.success(`${result.data.message}`);
       return history.push();
     } catch (error) {
-      return Alert.error(
-        `<div role="alert">${error.response.data.message}</div>`,
-        {
-          html: true,
-          position: "top-right",
-          effect: "bouncyflip",
-        }
-      );
+      if (error.response) {
+        return message.error(`${error.response.data.message}`);
+      } else {
+        return message.error(`${error.message}`);
+      }
     }
   };
 
   const responseGoogle = async (response) => {
     try {
       const result = await axios.post(
-        `https://api--elearning.herokuapp.com/auth/google`,
-        // `http://localhost:4000/auth/google`,
+        `http://localhost:4000/auth/google`,
         {
           access_token: response.accessToken,
         },
@@ -172,32 +169,122 @@ const HeaderComponent = () => {
       if (result.status === 200) {
         localStorage.setItem("token", result.data.token);
         dispatch({ type: "LOGIN_DATA", payload: result.data.user });
-        setIsModal1Visible(false);
-        Alert.success(
-          `<div role="alert"> Welcome ${result.data.user.full_name} to Elearning! </div>`,
-          {
-            html: true,
-            position: "top-right",
-            effect: "bouncyflip",
-          }
+        setIsModalSignIn(false);
+        message.success(
+          `Welcome ${result.data.user.full_name} to Elearning!`,
+          5
         );
         return history.push();
       }
     } catch (error) {
-      return Alert.error(
-        `<div role="alert">${error.response.data.message}</div>`,
-        {
-          html: true,
-          position: "top-right",
-          effect: "bouncyflip",
-        }
-      );
+      return message.error(`${error.response.data.message}`);
     }
   };
   const signOut = async () => {
     localStorage.removeItem("token");
     window.location.href = "/";
   };
+
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [cart, setCart] = useState();
+  const [totalCart, setTotalCart] = useState(0);
+
+  const [deleteStatus, setDeleteStatus] = useState(false);
+  const getCart = async () => {
+    if (user.email) {
+      try {
+        const result = await axios.get(
+          `http://localhost:4000/orders/${userId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + jwt,
+            },
+          }
+        );
+        const listCart = result.data.cart;
+        setTotalCart(
+          listCart.reduce((accumulator, currentValue) => {
+            return accumulator + currentValue.course_id.price;
+          }, totalCart)
+        );
+        setCart(result.data.cart);
+      } catch (error) {
+        return message.error(error.response.data.message);
+      }
+    }
+  };
+  const updateStatus = async () => {
+    for (let i = 0; i <= cart.length; i++) {
+      await axios.put(
+        `http://localhost:4000/orders/${cart[i]._id}`,
+        {
+          status: true,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + jwt,
+          },
+        }
+      );
+    }
+    return message.success(`Update Status Succesfully !`);
+  };
+
+  const updateAmount = async () => {
+    await axios.put(
+      `http://localhost:4000/auth/${user._id}`,
+      {
+        amount: user.amount - totalCart,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + jwt,
+        },
+      }
+    );
+    window.history.go();
+    return message.success(`Checkout successfully !`);
+  };
+
+  // Paypal
+  const onSuccess = async (data) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:4000/users/updateAmount`,
+        {
+          paymentId: data.paymentID,
+          user_id: user._id,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + jwt,
+          },
+        }
+      );
+      updateStatus();
+      message.success(`${response.data.message}`);
+      return history.push();
+    } catch (error) {
+      return message.error(`${error.message}`);
+    }
+  };
+  const transactionError = async (error) => {
+    return message.error(`${error.message}`);
+  };
+  const transactionCanceled = async () => {
+    return message.success(`Canceled Transaction Succesfully !`);
+  };
+
+  const [popconfirmVisible, setPopconfirmVisible] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const sttCart = props.sttCart;
+  useEffect(() => {
+    getCart();
+  }, [userId, deleteStatus, sttCart]);
 
   return (
     <Header
@@ -207,7 +294,6 @@ const HeaderComponent = () => {
         width: "100%",
       }}
     >
-      <Alert stack={{ limit: 1 }} />
       <Row justify="center" align="top">
         <div style={{ width: "1440px" }}>
           <div
@@ -237,7 +323,7 @@ const HeaderComponent = () => {
                   <Button
                     style={{ marginRight: "10px" }}
                     onClick={() => {
-                      setIsModal1Visible(true);
+                      setIsModalSignIn(true);
                     }}
                   >
                     Sign In
@@ -245,48 +331,11 @@ const HeaderComponent = () => {
                   <Button
                     type="primary"
                     onClick={() => {
-                      setIsModal2Visible(true);
+                      setIsModalSignUp(true);
                     }}
                   >
                     Sign Up
                   </Button>
-                </Menu>
-                <Menu
-                  style={{ float: "right" }}
-                  className="menu1"
-                  theme="dark"
-                  mode="horizontal"
-                >
-                  <div className="demo">
-                    <div style={{ marginLeft: 70, whiteSpace: "nowrap" }}>
-                      <Popconfirm
-                        placement="bottomRight"
-                        icon={<p />}
-                        cancelText="Continue shoping"
-                        okText={"Go to Cart"}
-                        title={
-                          <>
-                            <List></List>
-                            <h5>Total: $ 240.00</h5>
-                          </>
-                        }
-                        onCancel={() => {
-                          console.log("Continue shoping");
-                        }}
-                        onConfirm={() => {
-                          console.log("Go to cart");
-                        }}
-                      >
-                        <ShoppingCartOutlined
-                          style={{
-                            fontSize: 25,
-                            marginRight: "20px",
-                            marginTop: "5px",
-                          }}
-                        />
-                      </Popconfirm>
-                    </div>
-                  </div>
                 </Menu>
               </>
             ) : (
@@ -316,15 +365,18 @@ const HeaderComponent = () => {
                   }
                 >
                   <Menu.Item style={{ textAlign: "center" }} key="setting:1">
-                    Amount: $ 240
+                    Amount: $ {user.amount}
                   </Menu.Item>
                   <Menu.Item style={{ textAlign: "center" }} key="setting:2">
-                    <Link to={`/user/edit`}>Edit Profile</Link>
+                    <Link to={`/tutor/dashboard`}>Teach on E-learning</Link>
                   </Menu.Item>
                   <Menu.Item style={{ textAlign: "center" }} key="setting:3">
+                    <Link to={`/user/edit`}>Edit Profile</Link>
+                  </Menu.Item>
+                  <Menu.Item style={{ textAlign: "center" }} key="setting:4">
                     <Link to={`/user/library`}>My Library</Link>
                   </Menu.Item>
-                  <Menu.Item style={{ marginBottom: 20 }} key="setting:4">
+                  <Menu.Item style={{ marginBottom: 20 }} key="setting:5">
                     <Button
                       style={{ width: "100%" }}
                       type="primary"
@@ -344,36 +396,13 @@ const HeaderComponent = () => {
                   theme="dark"
                   mode="horizontal"
                 >
-                  <div className="demo">
-                    <div style={{ marginLeft: 70, whiteSpace: "nowrap" }}>
-                      <Popconfirm
-                        placement="bottomRight"
-                        icon={<p />}
-                        cancelText="Continue shoping"
-                        okText={"Go to Cart"}
-                        title={
-                          <>
-                            <List></List>
-                            <h5>Total: $ 240.00</h5>
-                          </>
-                        }
-                        onCancel={() => {
-                          console.log("Continue shoping");
-                        }}
-                        onConfirm={() => {
-                          console.log("Go to cart");
-                        }}
-                      >
-                        <ShoppingCartOutlined
-                          style={{
-                            fontSize: 25,
-                            marginRight: "20px",
-                            marginTop: "5px",
-                          }}
-                        />
-                      </Popconfirm>
-                    </div>
-                  </div>
+                  <Button
+                    type="primary"
+                    icon={<ShoppingCartOutlined />}
+                    onClick={() => setDrawerVisible(true)}
+                  >
+                    My Cart
+                  </Button>
                 </Menu>
               </>
             )}
@@ -383,8 +412,8 @@ const HeaderComponent = () => {
       <Modal
         centered={true}
         width={900}
-        visible={isModal1Visible}
-        onCancel={() => setIsModal1Visible(false)}
+        visible={isModalSignIn}
+        onCancel={() => setIsModalSignIn(false)}
         footer={null}
       >
         <Row
@@ -403,8 +432,8 @@ const HeaderComponent = () => {
             <Button
               type="link"
               onClick={() => {
-                setIsModal1Visible(false);
-                setIsModal2Visible(true);
+                setIsModalSignIn(false);
+                setIsModalSignUp(true);
               }}
               style={{ marginLeft: "30%" }}
             >
@@ -417,8 +446,6 @@ const HeaderComponent = () => {
               name="basic"
               initialValues={{ remember: true }}
               onFinish={onFinishSignin}
-              // onFinishFailed={onFinishFailed}
-              // eslint-disable-next-line react/jsx-no-duplicate-props
               initialValues={defaultValSignin}
             >
               <h1 style={{ textAlign: "center" }}>Sign In</h1>
@@ -455,6 +482,14 @@ const HeaderComponent = () => {
                   <LoginOutlined /> Sign In
                 </Button>
               </Form.Item>
+              <Form.Item {...btn}>
+                <Link
+                  to={`/auth/forgotPassword`}
+                  onClick={() => setIsModalSignIn(false)}
+                >
+                  Forgot Password ?
+                </Link>
+              </Form.Item>
             </Form>
             <p style={{ textAlign: "center" }}>Or </p>
             <GoogleLogin
@@ -483,8 +518,8 @@ const HeaderComponent = () => {
       <Modal
         centered={true}
         width={1000}
-        visible={isModal2Visible}
-        onCancel={() => setIsModal2Visible(false)}
+        visible={isModalSignUp}
+        onCancel={() => setIsModalSignUp(false)}
         footer={null}
       >
         <Row
@@ -498,8 +533,6 @@ const HeaderComponent = () => {
               name="basic"
               initialValues={{ remember: true }}
               onFinish={onFinishSignup}
-              // onFinishFailed={onFinishFailed}
-              // eslint-disable-next-line react/jsx-no-duplicate-props
               initialValues={defaultValSignup}
             >
               <h1 style={{ textAlign: "center" }}>Sign Up</h1>
@@ -595,8 +628,8 @@ const HeaderComponent = () => {
             <Button
               type="link"
               onClick={() => {
-                setIsModal2Visible(false);
-                setIsModal1Visible(true);
+                setIsModalSignUp(false);
+                setIsModalSignIn(true);
               }}
               style={{ marginLeft: "25%" }}
             >
@@ -605,6 +638,143 @@ const HeaderComponent = () => {
           </Col>
         </Row>
       </Modal>
+      <Drawer
+        title={<h3>My Cart</h3>}
+        width={500}
+        placement="right"
+        closable={true}
+        onClose={() => {
+          setPopconfirmVisible(false);
+          setDrawerVisible(false);
+        }}
+        visible={drawerVisible}
+      >
+        <List
+          dataSource={cart}
+          renderItem={(item) => (
+            <>
+              <Row>
+                <Col style={{ width: 300 }}>
+                  <Link
+                    to={`/courses/${item.course_id._id}`}
+                    onClick={() => setDrawerVisible(false)}
+                  >
+                    <h6>{item.course_id.course_title}</h6>
+                  </Link>
+                  <p>{item.course_id.cat_id.cat_name}</p>
+                  <p
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    $ {item.course_id.price}
+                  </p>
+                </Col>
+                <Col style={{ float: "right", width: 100, marginRight: 10 }}>
+                  <Button
+                    onClick={async () => {
+                      await axios.delete(
+                        `http://localhost:4000/orders/${item._id}`,
+                        {
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer " + jwt,
+                          },
+                        }
+                      );
+
+                      await axios.post(
+                        `http://localhost:4000/wishlists/add`,
+                        {
+                          course_id: item.course_id._id,
+                          user_id: user._id,
+                        },
+                        {
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer " + jwt,
+                          },
+                        }
+                      );
+                      return message.success(`Move to Wishlist Succesfully !`);
+                    }}
+                  >
+                    Move to Wishlist
+                  </Button>
+                  <Button
+                    type="link"
+                    onClick={async () => {
+                      try {
+                        const response = await axios.delete(
+                          `http://localhost:4000/orders/${item._id}`,
+                          {
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: "Bearer " + jwt,
+                            },
+                          }
+                        );
+                        setDeleteStatus(!deleteStatus);
+                        return message.success(response.data.message);
+                      } catch (error) {
+                        console.log(error);
+                        return message.error(error.message);
+                      }
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </Col>
+              </Row>
+              <hr />
+            </>
+          )}
+        />
+        <h5>Total: $ {totalCart}</h5>
+        <Row>
+          <Popconfirm
+            title={`Confirm Payment ?`}
+            visible={popconfirmVisible}
+            onConfirm={() => {
+              setConfirmLoading(true);
+              setTimeout(() => {
+                setConfirmLoading(false);
+                setPopconfirmVisible(false);
+                updateAmount();
+                updateStatus();
+              }, 2000);
+            }}
+            okButtonProps={{ loading: confirmLoading }}
+            onCancel={() => setPopconfirmVisible(false)}
+            placement="left"
+          >
+            <Button
+              type="primary"
+              danger
+              style={{ marginRight: 20, width: "30%" }}
+              onClick={() => {
+                if (user.amount >= totalCart) {
+                  setPopconfirmVisible(true);
+                } else {
+                  return message.warning(
+                    "Your amount is not enough to checkout !"
+                  );
+                }
+              }}
+            >
+              Checkout
+            </Button>
+          </Popconfirm>
+          <br />
+          <PaypalCheckout
+            total={totalCart}
+            onSuccess={onSuccess}
+            transactionError={transactionError}
+            transactionCanceled={transactionCanceled}
+          />
+        </Row>
+      </Drawer>
     </Header>
   );
 };

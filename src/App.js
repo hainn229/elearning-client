@@ -1,8 +1,5 @@
 // import logo from './logo.svg';
 // import './App.css';
-import "antd/dist/antd.css";
-import "react-s-alert/dist/s-alert-default.css";
-import "react-s-alert/dist/s-alert-css-effects/bouncyflip.css";
 
 import HeaderComponent from "./components/layouts/header";
 import FooterComponent from "./components/layouts/footer";

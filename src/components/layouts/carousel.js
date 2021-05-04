@@ -17,7 +17,7 @@ const CarouselComponent = () => {
             {/* <h3>First slide label</h3>
             <h5>Nulla vitae elit libero, a pharetra augue mollis interdum.</h5> */}
             <Button type="primary">
-              <Link to={`/courses/`}>Start Learning Now!</Link>
+              <Link to={`/`}>Start Learning Now!</Link>
             </Button>
           </Carousel.Caption>
         </Carousel.Item>
@@ -32,7 +32,7 @@ const CarouselComponent = () => {
             {/* <h3>Second slide label</h3>
             <h5>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</h5> */}
             <Button type="primary">
-              <Link to={`/courses/`}>Start Learning Now!</Link>
+              <Link to={`/`}>Start Learning Now!</Link>
             </Button>
           </Carousel.Caption>
         </Carousel.Item>
@@ -49,7 +49,7 @@ const CarouselComponent = () => {
               Praesent commodo cursus magna, vel scelerisque nisl consectetur.
             </h5> */}
             <Button type="primary">
-              <Link to={`/courses/`}>Start Learning Now!</Link>
+              <Link to={`/`}>Start Learning Now!</Link>
             </Button>
           </Carousel.Caption>
         </Carousel.Item>
@@ -66,7 +66,7 @@ const CarouselComponent = () => {
               Praesent commodo cursus magna, vel scelerisque nisl consectetur.
             </h5> */}
             <Button type="primary">
-              <Link to={`/courses/`}>Start Learning Now!</Link>
+              <Link to={`/`}>Start Learning Now!</Link>
             </Button>
           </Carousel.Caption>
         </Carousel.Item>

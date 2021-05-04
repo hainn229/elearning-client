@@ -1,32 +1,17 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useHistory, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-// eslint-disable-next-line no-unused-vars
 import { useForm } from "react-hook-form";
 import axios from "axios";
 
-import Alert from "react-s-alert";
-import "react-s-alert/dist/s-alert-default.css";
-import "react-s-alert/dist/s-alert-css-effects/bouncyflip.css";
-
-import {
-  // eslint-disable-next-line no-unused-vars
-  PlusOutlined,
-  HeartOutlined,
-  UploadOutlined,
-  UserOutlined,
-  MailOutlined,
-  LoadingOutlined,
-} from "@ant-design/icons";
+import { UploadOutlined } from "@ant-design/icons";
 import {
   Breadcrumb,
   Row,
   Col,
-  List,
-  Card,
   Button,
-  Divider,
   Tabs,
   Form,
   Radio,
@@ -34,12 +19,8 @@ import {
   Input,
   DatePicker,
   message,
-  Image,
-  Avatar,
 } from "antd";
 const { TabPane } = Tabs;
-
-const { Meta } = Card;
 const form = {
   labelCol: { span: 6 },
   wrapperCol: {
@@ -54,76 +35,95 @@ const btn = {
 
 const MyAccountComponent = () => {
   useAuth();
-  // const dispatch = useDispatch();
+  const jwt = localStorage.getItem("token");
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
   const userId = user._id;
   const history = useHistory();
   const [urlAvt, setUrlAvt] = useState();
-  const onSubmitUpdate = async (updateInfo) => {
-    await axios.put(
-      `https://api--elearning.herokuapp.com/auth/${userId}`,
-      // `http://localhost:4000/auth/${userId}`,
-      {
-        full_name: updateInfo.full_name,
-        gender: updateInfo.gender,
-        date_of_birth: updateInfo.date_of_birth._d,
-        avatarUrl: urlAvt,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
+  const [isDisabled, setIsDisabled] = useState(false);
+  const onChangeAvatar = async (e) => {
+    try {
+      if (e.fileList.length === 0) {
+        setIsDisabled(false);
+      } else {
+        setIsDisabled(true);
+        const formData = new FormData();
+        formData.append("image", e.file);
+        const result = await axios.post(
+          `http://localhost:4000/upload/images`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        setUrlAvt(result.data.url);
       }
-    );
-    Alert.success(`<div role="alert">Update Successfully !</div>`, {
-      html: true,
-      position: "top-right",
-      effect: "bouncyflip",
-    });
-    return history.go();
+    } catch (error) {
+      if (error.response) {
+        return message.error(error.response.data.message);
+      } else {
+        return message.error(error.message);
+      }
+    }
   };
-
-  const onChangeAvatar = async (file) => {
-    const formData = new FormData();
-    formData.append("image", file);
-    const result = await axios.post(
-      `https://api--elearning.herokuapp.com/upload/images`,
-      // `http://localhost:4000/upload/images`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
+  const onSubmitUpdate = async (updateInfo) => {
+    try {
+      const result = await axios.put(
+        `http://localhost:4000/auth/${userId}`,
+        {
+          full_name: updateInfo.full_name,
+          gender: updateInfo.gender,
+          date_of_birth: updateInfo.date_of_birth._d,
+          avatarUrl: urlAvt,
         },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + jwt,
+          },
+        }
+      );
+      if (result.status === 200) {
+        message.success(result.data.message);
+        return window.history.go();
       }
-    );
-    setUrlAvt(result.data.url);
+    } catch (error) {
+      if (error.response) {
+        return message.error(error.response.data.message);
+      } else {
+        return message.error(error.message);
+      }
+    }
   };
 
   const onSubmitUpdatePassword = async (updateInfo) => {
-    await axios.put(
-      `https://api--elearning.herokuapp.com/auth/updatePassword`,
-      // `http://localhost:4000/auth/updatePassword`,
-      {
-        cur_password: updateInfo.cur_password,
-        new_password: updateInfo.new_password,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
+    try {
+      await axios.put(
+        `http://localhost:4000/auth/updatePassword`,
+        {
+          cur_password: updateInfo.cur_password,
+          new_password: updateInfo.new_password,
         },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + jwt,
+          },
+        }
+      );
+      message.sucess(`Password Has Been Updated Successfully !`);
+      return history.go();
+    } catch (error) {
+      if (error.response) {
+        return message.error(error.response.data.message);
+      } else {
+        return message.error(error.message);
       }
-    );
-    Alert.success(
-      `<div role="alert">Password Has Been Updated Successfully !</div>`,
-      {
-        html: true,
-        position: "top-right",
-        effect: "bouncyflip",
-      }
-    );
-    return history.go();
+    }
   };
 
   return (
@@ -148,7 +148,6 @@ const MyAccountComponent = () => {
             <TabPane tab={<h6>Edit Profile</h6>} key="1">
               <Form {...form} name="basic" onFinish={onSubmitUpdate}>
                 <Form.Item label="Email address">
-                  {/* <Input defaultValue={user.email} disabled /> */}
                   <p>{user.email}</p>
                 </Form.Item>
 
@@ -205,10 +204,10 @@ const MyAccountComponent = () => {
                 >
                   <Upload
                     onChange={(e) => {
-                      onChangeAvatar(e.file);
+                      onChangeAvatar(e);
                     }}
                   >
-                    <Button>
+                    <Button disabled={isDisabled}>
                       <UploadOutlined /> Click to upload
                     </Button>
                   </Upload>

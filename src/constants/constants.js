@@ -6,3 +6,4 @@ export const COMMENTS = 'COMMENTS';
 export const WISHLIST = 'WISHLIST';
 export const CATEGORIES = 'CATEGORIES';
 export const SEARCH = 'SEARCH';
+export const RECENT_COURSES = 'RECENT_COURSES';
