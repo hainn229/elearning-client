@@ -79,6 +79,25 @@ const HeaderComponent = (props) => {
   // eslint-disable-next-line no-unused-vars
   const userId = user._id;
 
+  const test = async () => {
+    try {
+      const result = await axios.get(`http://103.82.24.170:3000`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (result.status === 200) {
+        console.log(result);
+      }
+    } catch (error) {
+      return message.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    test();
+  }, [1]);
+
   const onFinishSignin = async (dataInput) => {
     try {
       const result = await axios.post(
@@ -96,9 +115,7 @@ const HeaderComponent = (props) => {
       );
       if (result.data) {
         if (result.data.user.role === "ADMIN") {
-          return message.error(
-            "Please sign in with an user account!"
-          );
+          return message.error("Please sign in with an user account!");
         } else if (result.data.user.status === false) {
           return message.error("Your account has been locked!");
         } else {
