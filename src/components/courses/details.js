@@ -28,6 +28,7 @@ import {
   Rate,
   Divider,
   message,
+  Image,
 } from "antd";
 
 const desc = [1, 2, 3, 4, 5];
@@ -81,13 +82,15 @@ const DetailsCourseComponent = (props) => {
           },
         }
       );
-      setCategory(result.data.course.cat_id.cat_name);
-      if (result.data.course.tutor_id) {
-        setTutor(result.data.course.tutor_id.full_name);
-      } else {
-        setTutor(result.data.course.tutor);
+      if (result.status === 200) {
+        setCategory(result.data.course.cat_id.cat_name);
+        if (result.data.course.tutor_id) {
+          setTutor(result.data.course.tutor_id.full_name);
+        } else {
+          setTutor(result.data.course.tutor);
+        }
+        setDetailsCourse(result.data.course);
       }
-      setDetailsCourse(result.data.course);
     } catch (error) {
       return message.error(error.response.data.message);
     }
@@ -104,8 +107,70 @@ const DetailsCourseComponent = (props) => {
         },
       }
     );
-    setTotalItems(result.data.totalItems);
     setComment(result.data.comments);
+    setTotalItems(result.data.totalItems);
+  };
+
+  const onAddToCart = async (id) => {
+    if (user) {
+      try {
+        const result = await axios.post(
+          `http://localhost:4000/orders/add`,
+          {
+            user_id: user._id,
+            course_id: id,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + jwt,
+            },
+          }
+        );
+        if (result.status === 200) {
+          message.success(result.data.message);
+          setTimeout(() => {
+            return window.history.go();
+          }, 1500);
+        }
+      } catch (error) {
+        if (error.response) {
+          return message.error(error.response.data.message);
+        } else {
+          return message.error(error.message);
+        }
+      }
+    }
+  };
+  const onAddToWishlist = async (id) => {
+    try {
+      if (!user) {
+        return message.error(`You need to be signed in to use this feature!`);
+      } else {
+        const response = await axios.post(
+          `http://localhost:4000/wishlists/add`,
+          {
+            user_id: user._id,
+            course_id: id,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + jwt,
+            },
+          }
+        );
+        if (response.status === 200) {
+          return message.success(response.data.message);
+        }
+      }
+    } catch (error) {
+      if (error.response) {
+        return message.error(error.response.data.message);
+      } else {
+        return message.error(error.message);
+      }
+    }
   };
 
   useEffect(() => {
@@ -139,7 +204,8 @@ const DetailsCourseComponent = (props) => {
           <div className="site-card-wrapper">
             <Row>
               <Col flex={2} style={{ width: "30%" }}>
-                <img
+                <Image
+                  preview={false}
                   src={detailsCourse.poster}
                   style={{ height: 350, width: 350 }}
                 />
@@ -155,14 +221,20 @@ const DetailsCourseComponent = (props) => {
                 <p>Tutor: {tutor}</p>
                 {detailsCourse.description}
                 <br />
+                <br />
                 <Button
                   type="primary"
                   style={{ marginRight: "10px" }}
                   icon={<PlusOutlined />}
+                  onClick={() => onAddToCart(detailsCourse._id)}
                 >
                   Add to Cart
                 </Button>
-                <Button type="primary" shape="circle" danger>
+                <Button
+                  shape="circle"
+                  danger
+                  onClick={() => onAddToWishlist(detailsCourse._id)}
+                >
                   <HeartOutlined />
                 </Button>
               </Col>
@@ -179,16 +251,12 @@ const DetailsCourseComponent = (props) => {
                   requiredMark={true}
                   style={{
                     borderRight: "2px solid whitesmoke",
-                    paddingTop: "10px",
                     paddingBottom: "10px",
                     paddingRight: "10px",
                   }}
                 >
-                  <Form.Item
-                    label="Average rating:"
-                    required
-                    tooltip="This is a required field"
-                  >
+                  <Form.Item>
+                    <p>Average rating: </p>
                     <Rate
                       tooltips={desc}
                       onChange={handleChangeRate}
@@ -207,11 +275,8 @@ const DetailsCourseComponent = (props) => {
                       value={rate}
                     />
                   </Form.Item>
-                  <Form.Item
-                    label="Description"
-                    required
-                    tooltip="This is a required field"
-                  >
+                  <Form.Item>
+                    <p>Description: </p>
                     <textarea
                       style={{ width: "100%" }}
                       rows={4}
@@ -230,7 +295,7 @@ const DetailsCourseComponent = (props) => {
                           );
                         } else {
                           if (
-                            commentData.point === "" ||
+                            commentData.rate === "" ||
                             commentData.description === ""
                           ) {
                             return message.warning(
@@ -279,7 +344,7 @@ const DetailsCourseComponent = (props) => {
                     <li>
                       <Comment
                         actions={
-                          user.email
+                          user && item.user_id
                             ? user._id === item.user_id._id
                               ? [
                                   <span
@@ -333,11 +398,8 @@ const DetailsCourseComponent = (props) => {
                               initialValues=""
                               requiredMark={true}
                             >
-                              <Form.Item
-                                label="Average rating:"
-                                required
-                                tooltip="This is a required field"
-                              >
+                              <Form.Item>
+                                <p>Average rating: </p>
                                 <span>
                                   <Rate
                                     tooltips={desc}
@@ -362,11 +424,8 @@ const DetailsCourseComponent = (props) => {
                                   />
                                 </span>
                               </Form.Item>
-                              <Form.Item
-                                label="Description"
-                                required
-                                tooltip="This is a required field"
-                              >
+                              <Form.Item>
+                                <p>Description: </p>
                                 <textarea
                                   defaultValue={item.description}
                                   style={{ width: "100%" }}
@@ -380,28 +439,48 @@ const DetailsCourseComponent = (props) => {
                                 <Button
                                   type="primary"
                                   onClick={handleSubmit1(async (updateData) => {
-                                    let commentId = item._id;
-                                    let userId = user._id;
-                                    await axios.put(
-                                      `http://localhost:4000/comments/${commentId}`,
-                                      {
-                                        course_id: courseID,
-                                        user_id: userId,
-                                        point: updateData.rateUpdate,
-                                        description: updateData.description,
-                                      },
-                                      {
-                                        headers: {
-                                          "Content-Type": "application/json",
-                                          Authorization: "Bearer " + jwt,
-                                        },
+                                    try {
+                                      if (
+                                        updateData.rate === "" ||
+                                        updateData.description === ""
+                                      ) {
+                                        return message.warning(
+                                          `You need to fill in the information for a comment!`
+                                        );
+                                      } else {
+                                        let commentId = item._id;
+                                        let userId = user._id;
+                                        await axios.put(
+                                          `http://localhost:4000/comments/${commentId}`,
+                                          {
+                                            course_id: courseID,
+                                            user_id: userId,
+                                            point: updateData.rateUpdate,
+                                            description: updateData.description,
+                                          },
+                                          {
+                                            headers: {
+                                              "Content-Type":
+                                                "application/json",
+                                              Authorization: "Bearer " + jwt,
+                                            },
+                                          }
+                                        );
+                                        setActionsStatus(!actionsStatus);
+                                        setStatus(true);
+                                        return message.success(
+                                          ` Update comment successfully! `
+                                        );
                                       }
-                                    );
-                                    setStatus(true);
-                                    setActionsStatus(!actionsStatus);
-                                    return message.success(
-                                      ` Update comment successfully! `
-                                    );
+                                    } catch (error) {
+                                      if (error.response) {
+                                        return message.error(
+                                          error.response.data.message
+                                        );
+                                      } else {
+                                        return message.error(error.message);
+                                      }
+                                    }
                                   })}
                                 >
                                   Update

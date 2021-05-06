@@ -148,7 +148,7 @@ const LearningComponent = (props) => {
     if (!user._id) {
       return message.warning(`You need to be signed in to use this feature!`);
     } else {
-      if (commentData.point === "" || commentData.description === "") {
+      if (commentData.rate === "" || commentData.description === "") {
         return message.warning(`Please fill in all the information!`);
       } else {
         try {
@@ -228,7 +228,6 @@ const LearningComponent = (props) => {
               <Player
                 // playsInline
                 src={urlContent}
-                // poster={urlContent}
               >
                 <BigPlayButton position="center" />
               </Player>
@@ -263,11 +262,8 @@ const LearningComponent = (props) => {
                       paddingRight: "10px",
                     }}
                   >
-                    <Form.Item
-                      label="Average rating:"
-                      required
-                      tooltip="This is a required field"
-                    >
+                    <Form.Item>
+                      <p>Average rating: </p>
                       <Rate
                         tooltips={desc}
                         onChange={handleChangeRate}
@@ -286,11 +282,8 @@ const LearningComponent = (props) => {
                         value={rate}
                       />
                     </Form.Item>
-                    <Form.Item
-                      label="Description"
-                      required
-                      tooltip="This is a required field"
-                    >
+                    <Form.Item>
+                      <p>Description: </p>
                       <textarea
                         style={{ width: "100%" }}
                         rows={4}
@@ -374,11 +367,8 @@ const LearningComponent = (props) => {
                                 initialValues=""
                                 requiredMark={true}
                               >
-                                <Form.Item
-                                  label="Average rating:"
-                                  required
-                                  tooltip="This is a required field"
-                                >
+                                <Form.Item>
+                                  <p>Average rating: </p>
                                   <span>
                                     <Rate
                                       tooltips={desc}
@@ -403,11 +393,8 @@ const LearningComponent = (props) => {
                                     />
                                   </span>
                                 </Form.Item>
-                                <Form.Item
-                                  label="Description"
-                                  required
-                                  tooltip="This is a required field"
-                                >
+                                <Form.Item>
+                                  <p>Description: </p>
                                   <textarea
                                     defaultValue={item.description}
                                     style={{ width: "100%" }}
@@ -423,30 +410,40 @@ const LearningComponent = (props) => {
                                     onClick={handleSubmit1(
                                       async (updateData) => {
                                         try {
-                                          let commentId = item._id;
-                                          let userId = user._id;
-                                          await axios.put(
-                                            `http://localhost:4000/comments/${commentId}`,
-                                            {
-                                              course_id: courseID,
-                                              user_id: userId,
-                                              point: updateData.rateUpdate,
-                                              description:
-                                                updateData.description,
-                                            },
-                                            {
-                                              headers: {
-                                                "Content-Type":
-                                                  "application/json",
-                                                Authorization: "Bearer " + jwt,
+                                          if (
+                                            updateData.rate === "" ||
+                                            updateData.description === ""
+                                          ) {
+                                            return message.warning(
+                                              `You need to fill in the information for a comment!`
+                                            );
+                                          } else {
+                                            let commentId = item._id;
+                                            let userId = user._id;
+                                            await axios.put(
+                                              `http://localhost:4000/comments/${commentId}`,
+                                              {
+                                                course_id: courseID,
+                                                user_id: userId,
+                                                point: updateData.rateUpdate,
+                                                description:
+                                                  updateData.description,
                                               },
-                                            }
-                                          );
-                                          setActionsStatus(!actionsStatus);
-                                          setStatus(true);
-                                          return message.success(
-                                            ` Update comment successfully! `
-                                          );
+                                              {
+                                                headers: {
+                                                  "Content-Type":
+                                                    "application/json",
+                                                  Authorization:
+                                                    "Bearer " + jwt,
+                                                },
+                                              }
+                                            );
+                                            setActionsStatus(!actionsStatus);
+                                            setStatus(true);
+                                            return message.success(
+                                              ` Update comment successfully! `
+                                            );
+                                          }
                                         } catch (error) {
                                           if (error.response) {
                                             return message.error(

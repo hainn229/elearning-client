@@ -40,7 +40,6 @@ const CoursesComponent = () => {
   const [searchResultsData, setSearchResultsData] = useState();
   const [filter, setFilter] = useState({
     keywords: "",
-    // tutorId: "",
     category: "",
   });
   const [resultsFilter, setResultsFilter] = useState();
@@ -106,8 +105,12 @@ const CoursesComponent = () => {
             },
           }
         );
-        setSttCart(!sttCart);
-        return message.success(response.data.message);
+        if (response.status === 200) {
+          message.success(response.data.message);
+          setTimeout(() => {
+            return window.history.go();
+          }, 1500);
+        }
       } catch (error) {
         if (error.response) {
           return message.error(error.response.data.message);
@@ -135,9 +138,9 @@ const CoursesComponent = () => {
             },
           }
         );
-        console.log(response);
-        // setWishlistStatus(!wishlistStatus);
-        return message.success(response.data.message);
+        if (response.status === 200) {
+          return message.success(response.data.message);
+        }
       }
     } catch (error) {
       if (error.response) {
@@ -147,8 +150,6 @@ const CoursesComponent = () => {
       }
     }
   };
-
-  const [sttCart, setSttCart] = useState(false);
 
   useEffect(() => {
     getCategories();

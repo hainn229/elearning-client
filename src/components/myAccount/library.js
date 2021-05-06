@@ -8,7 +8,17 @@ import axios from "axios";
 import queryString from "query-string";
 
 import { PlusOutlined, HeartOutlined } from "@ant-design/icons";
-import { Breadcrumb, Row, Col, List, Card, Button, Tabs, message } from "antd";
+import {
+  Breadcrumb,
+  Row,
+  Col,
+  List,
+  Card,
+  Button,
+  Tabs,
+  message,
+  Image,
+} from "antd";
 const { TabPane } = Tabs;
 
 const { Meta } = Card;
@@ -77,6 +87,50 @@ const LibraryComponent = () => {
   };
 
   const [actionsStatus, setActionsStatus] = useState(false);
+  const onAddToCart = async (courseId) => {
+    if (user) {
+      try {
+        const result = await axios.post(
+          `http://localhost:4000/orders/add`,
+          {
+            user_id: user._id,
+            course_id: courseId,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + jwt,
+            },
+          }
+        );
+        if (result.status === 200) {
+          setActionsStatus(!actionsStatus);
+          message.success(result.data.message);
+          setTimeout(() => {
+            return window.history.go();
+          }, 1500);
+        }
+      } catch (error) {
+        if (error.response) {
+          return message.error(error.response.data.message);
+        } else {
+          return message.error(error.message);
+        }
+      }
+    }
+  };
+  const onRemove = async (id) => {
+    const result = await axios.delete(`http://localhost:4000/wishlists/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + jwt,
+      },
+    });
+    if (result.status === 200) {
+      setActionsStatus(!actionsStatus);
+      return message.success(result.data.message);
+    }
+  };
 
   useEffect(() => {
     getLibrary(userId);
@@ -109,10 +163,12 @@ const LibraryComponent = () => {
               <List
                 grid={{
                   gutter: 16,
-                  column: 3,
-                }}
-                pagination={{
-                  pageSize: 3,
+                  xs: 1,
+                  sm: 2,
+                  md: 4,
+                  lg: 4,
+                  xl: 5,
+                  xxl: 5,
                 }}
                 dataSource={library}
                 renderItem={(item) => (
@@ -123,7 +179,14 @@ const LibraryComponent = () => {
                         height: "auto",
                         border: "2px solid whitesmoke",
                       }}
-                      cover={<img alt="poster" src={item.course_id.poster} />}
+                      cover={
+                        <Image
+                          preview={false}
+                          height={300}
+                          alt="poster"
+                          src={item.course_id.poster}
+                        />
+                      }
                     >
                       <Meta
                         title={
@@ -161,10 +224,12 @@ const LibraryComponent = () => {
               <List
                 grid={{
                   gutter: 16,
-                  column: 3,
-                }}
-                pagination={{
-                  pageSize: 3,
+                  xs: 1,
+                  sm: 2,
+                  md: 4,
+                  lg: 4,
+                  xl: 5,
+                  xxl: 5,
                 }}
                 dataSource={wishlist}
                 renderItem={(item) => (
@@ -217,6 +282,7 @@ const LibraryComponent = () => {
                       >
                         <List.Item>
                           <Button
+                            onClick={() => onAddToCart(item.course_id._id)}
                             style={{ width: "100%" }}
                             icon={<PlusOutlined />}
                             type="primary"
@@ -226,22 +292,8 @@ const LibraryComponent = () => {
                         </List.Item>
                         <List.Item>
                           <Button
+                            onClick={() => onRemove(item._id)}
                             style={{ width: "100%" }}
-                            onClick={async () => {
-                              const result = await axios.delete(
-                                `http://localhost:4000/wishlists/${item.course_id._id}`,
-                                {
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: "Bearer " + jwt,
-                                  },
-                                }
-                              );
-                              if (result.status === 200) {
-                                setActionsStatus(!actionsStatus);
-                                return message.success(`Remove Successfully !`);
-                              }
-                            }}
                             icon={<HeartOutlined />}
                             type="primary"
                             danger

@@ -25,6 +25,8 @@ import {
   Image,
   message,
   Popconfirm,
+  InputNumber,
+  Badge,
 } from "antd";
 import {
   ShoppingCartOutlined,
@@ -32,6 +34,7 @@ import {
   GoogleOutlined,
   LoginOutlined,
   LogoutOutlined,
+  MoneyCollectOutlined,
 } from "@ant-design/icons";
 
 const { Header } = Layout;
@@ -76,27 +79,7 @@ const HeaderComponent = (props) => {
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
-  // eslint-disable-next-line no-unused-vars
   const userId = user._id;
-
-  const test = async () => {
-    try {
-      const result = await axios.get(`http://103.82.24.170:3000`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (result.status === 200) {
-        console.log(result);
-      }
-    } catch (error) {
-      return message.error(error.message);
-    }
-  };
-
-  useEffect(() => {
-    test();
-  }, [1]);
 
   const onFinishSignin = async (dataInput) => {
     try {
@@ -250,7 +233,7 @@ const HeaderComponent = (props) => {
   };
 
   const updateAmount = async () => {
-    await axios.put(
+    const result = await axios.put(
       `http://localhost:4000/auth/${user._id}`,
       {
         amount: user.amount - totalCart,
@@ -262,8 +245,12 @@ const HeaderComponent = (props) => {
         },
       }
     );
-    window.history.go();
-    return message.success(`Checkout successfully !`);
+    if (result.status === 200) {
+      setTimeout(() => {
+        message.success(result.data.message);
+      }, 1500);
+      return window.history.go();
+    }
   };
 
   // Paypal
@@ -284,24 +271,27 @@ const HeaderComponent = (props) => {
       );
       updateStatus();
       message.success(`${response.data.message}`);
-      return history.push();
+      return window.history.go();
     } catch (error) {
       return message.error(`${error.message}`);
     }
   };
   const transactionError = async (error) => {
-    return message.error(`${error.message}`);
+    return message.error(error.message);
   };
   const transactionCanceled = async () => {
-    return message.success(`Canceled Transaction Succesfully !`);
+    return message.success(`Transaction has been cancelled !`);
   };
 
   const [popconfirmVisible, setPopconfirmVisible] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const sttCart = props.sttCart;
+
+  const [modalUpdateAmount, setModalUpdateAmount] = useState(false);
+  const [totalAmount, setTotalAmount] = useState(0);
+
   useEffect(() => {
     getCart();
-  }, [userId, deleteStatus, sttCart]);
+  }, [userId, deleteStatus]);
 
   return (
     <Header
@@ -309,6 +299,7 @@ const HeaderComponent = (props) => {
         position: "fixed",
         zIndex: 1,
         width: "100%",
+        height: 70,
       }}
     >
       <Row justify="center" align="top">
@@ -381,8 +372,12 @@ const HeaderComponent = (props) => {
                     )
                   }
                 >
-                  <Menu.Item style={{ textAlign: "center" }} key="setting:1">
-                    Amount: $ {user.amount}
+                  <Menu.Item
+                    style={{ textAlign: "center" }}
+                    key="setting:1"
+                    onClick={() => setModalUpdateAmount(true)}
+                  >
+                    Update Amount
                   </Menu.Item>
                   <Menu.Item style={{ textAlign: "center" }} key="setting:2">
                     <Link to={`/tutor/dashboard`}>Teach on E-learning</Link>
@@ -407,6 +402,19 @@ const HeaderComponent = (props) => {
                   </Menu.Item>
                 </SubMenu>
 
+                <Menu
+                  style={{ marginLeft: 10, float: "right" }}
+                  className="menu1"
+                  theme="dark"
+                  mode="horizontal"
+                >
+                  <span>
+                    Balance:{" "}
+                    <span style={{ color: "yellow", fontSize: 18 }}>
+                      {"$ " + user.amount}
+                    </span>
+                  </span>
+                </Menu>
                 <Menu
                   style={{ float: "right" }}
                   className="menu1"
@@ -654,6 +662,76 @@ const HeaderComponent = (props) => {
             </Button>
           </Col>
         </Row>
+      </Modal>
+      <Modal
+        title="Update Amount"
+        centered={true}
+        width={400}
+        visible={modalUpdateAmount}
+        onCancel={() => setModalUpdateAmount(false)}
+        footer={null}
+      >
+        {user ? (
+          <>
+            <h6>Balance:</h6>
+            <h1>{"$ " + user.amount}</h1>
+          </>
+        ) : (
+          []
+        )}
+        <Form>
+          <Form.Item
+            label="Amount"
+            name="amount"
+            rules={[
+              {
+                required: true,
+                message: "Please input number amount!",
+              },
+            ]}
+          >
+            <InputNumber
+              style={{ width: 200 }}
+              min={1}
+              onChange={(value) => {
+                setTotalAmount(value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item>
+            <PaypalCheckout
+              total={totalAmount}
+              onSuccess={async (data) => {
+                try {
+                  const result = await axios.post(
+                    `http://localhost:4000/users/updateAmount`,
+                    {
+                      paymentId: data.paymentID,
+                      user_id: user._id,
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + jwt,
+                      },
+                    }
+                  );
+                  if (result.status === 200) {
+                    setModalUpdateAmount(false);
+                    setTimeout(() => {
+                      message.success(`${result.data.message}`);
+                    }, 5000);
+                    return window.history.go();
+                  }
+                } catch (error) {
+                  return message.error(`${error.message}`);
+                }
+              }}
+              transactionError={transactionError}
+              transactionCanceled={transactionCanceled}
+            />
+          </Form.Item>
+        </Form>
       </Modal>
       <Drawer
         title={<h3>My Cart</h3>}
