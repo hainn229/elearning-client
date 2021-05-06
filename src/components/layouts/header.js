@@ -6,10 +6,11 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
-import { useHistory, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import GoogleLogin from "react-google-login";
 import { PaypalCheckout } from "../paypal/index";
+import { postSignIn } from "../../APIs/index";
 import {
   Layout,
   Menu,
@@ -60,7 +61,6 @@ const btn = {
 
 const HeaderComponent = (props) => {
   useAuth();
-  const history = useHistory();
   const dispatch = useDispatch();
 
   const jwt = localStorage.getItem("token");
@@ -83,20 +83,8 @@ const HeaderComponent = (props) => {
 
   const onFinishSignin = async (dataInput) => {
     try {
-      const result = await axios.post(
-        `http://localhost:4000/auth/login`,
-        {
-          email: dataInput.email,
-          password: dataInput.password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
-      if (result.data) {
+      const result = await postSignIn(dataInput);
+      if (result.status === 200) {
         if (result.data.user.role === "ADMIN") {
           return message.error("Please sign in with an user account!");
         } else if (result.data.user.status === false) {
@@ -111,13 +99,13 @@ const HeaderComponent = (props) => {
           );
         }
       }
-      return history.push();
+      return windows.history.push();
     } catch (error) {
       if (error.response) {
         return message.error(`${error.response.data.message}`);
       } else {
         return message.error(
-          `Could not a user with an entered email address !`
+          `Could not find a user with an entered email address !`
         );
       }
     }
