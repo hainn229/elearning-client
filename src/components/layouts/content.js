@@ -2,24 +2,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import queryString from "query-string";
-import axios from "axios";
+import { getCoursesPopular, getCoursesRecent } from "../../APIs";
 
 import { Link } from "react-router-dom";
 import { Col, Row, Calendar, List, message, Avatar, Space } from "antd";
-import { MessageOutlined, LikeOutlined, StarOutlined } from "@ant-design/icons";
 
 import CarouselComponent from "./carousel";
 import CoursesComponent from "../courses/index";
 import { useSelector } from "react-redux";
 
-const IconText = ({ icon, text }) => (
-  <Space>
-    {React.createElement(icon)}
-    {text}
-  </Space>
-);
 const ContentComponent = () => {
-  const jwt = localStorage.getItem("token");
   const [pagination, setPagination] = useState({
     currentPage: 1,
     limitPage: 5,
@@ -31,16 +23,10 @@ const ContentComponent = () => {
   const getPopularCourses = async () => {
     try {
       const keys = queryString.stringify(pagination);
-      const result = await axios.get(
-        `http://localhost:4000/courses/popular?${keys}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
-      setPopularCourses(result.data.courses.docs);
+      const result = await getCoursesPopular(keys);
+      if (result.status === 200) {
+        setPopularCourses(result.data.courses.docs);
+      }
     } catch (error) {
       if (error.response) {
         return message.error(error.response.data.message);
@@ -54,17 +40,10 @@ const ContentComponent = () => {
   const getRecentCourses = async () => {
     if (user.email) {
       try {
-        const userId = user._id;
-        const result = await axios.get(
-          `http://localhost:4000/courses/recent/${userId}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
-        setCoursesRecent(result.data.courses.recents);
+        const result = await getCoursesRecent(user._id);
+        if (result.status === 200) {
+          setCoursesRecent(result.data.courses.recents);
+        }
       } catch (error) {
         if (error.response) {
           return message.error(error.response.data.message);
@@ -77,7 +56,7 @@ const ContentComponent = () => {
 
   useEffect(() => {
     getPopularCourses();
-    getRecentCourses();
+    getRecentCourses(user._id);
   }, ["1"]);
 
   return (

@@ -4,12 +4,20 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import queryString from "query-string";
 
 import InfiniteScroll from "react-infinite-scroller";
 import { Player, BigPlayButton } from "video-react";
 import "video-react/dist/video-react.css";
+
+import {
+  getDetailsCourse,
+  getComments,
+  getCourseWithContents,
+  postAddComment,
+  deleteComment,
+  putUpdateComment,
+} from "../../APIs/index";
 
 import { UserOutlined, StarOutlined } from "@ant-design/icons";
 import {
@@ -30,23 +38,16 @@ const { TabPane } = Tabs;
 const desc = [1, 2, 3, 4, 5];
 const LearningComponent = (props) => {
   useAuth();
-  const jwt = localStorage.getItem("token");
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
   const courseID = props.courseId;
   const [courseDetails, setCourseDetails] = useState();
-  const getDetailsCourse = async () => {
-    const result = await axios.get(
-      `http://localhost:4000/courses/${courseID}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + jwt,
-        },
-      }
-    );
-    setCourseDetails(result.data.course);
+  const getDetails = async () => {
+    const result = await getDetailsCourse(courseID);
+    if (result.status === 200) {
+      setCourseDetails(result.data.course);
+    }
   };
 
   const [comment, setComment] = useState([]);
@@ -75,23 +76,13 @@ const LearningComponent = (props) => {
   const handleChangeRateUpdate = (value) => {
     setRateUpdate(value);
   };
-  const getComments = async () => {
+  const getComment = async () => {
     try {
       const paramsKey = queryString.stringify(pagination);
-      const result = await axios.get(
-        `http://localhost:4000/comments/${courseID}?${paramsKey}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
+      const result = await getComments(courseID, paramsKey);
       if (result.status === 200) {
         setTotalItems(result.data.totalItems);
         setComment(result.data.comments);
-      } else {
-        return message.error(result.data.message);
       }
     } catch (error) {
       if (error.response) {
@@ -103,11 +94,11 @@ const LearningComponent = (props) => {
   };
   const [actionsStatus, setActionsStatus] = useState(false);
   useEffect(() => {
-    getComments();
+    getComment();
   }, [pagination, actionsStatus]);
 
   useEffect(() => {
-    getDetailsCourse(courseID);
+    getDetails(courseID);
   }, [courseID]);
 
   const [contents, setContents] = useState();
@@ -115,21 +106,11 @@ const LearningComponent = (props) => {
   const [urlContent, setUrlContent] = useState();
   const getContentDetails = async () => {
     try {
-      const result = await axios.get(
-        `http://localhost:4000/contents/${courseID}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
+      const result = await getCourseWithContents(courseID);
       if (result.status === 200) {
         setContents(result.data.contents);
         setLectureName(result.data.contents[0].title);
         setUrlContent(result.data.contents[0].url);
-      } else {
-        return message.error(result.data.message);
       }
     } catch (error) {
       if (error.response) {
@@ -152,27 +133,15 @@ const LearningComponent = (props) => {
         return message.warning(`Please fill in all the information!`);
       } else {
         try {
-          const userId = user._id;
-          const result = await axios.post(
-            `http://localhost:4000/comments/add`,
-            {
-              course_id: courseID,
-              user_id: userId,
-              point: commentData.rate,
-              description: commentData.description,
-            },
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + jwt,
-              },
-            }
-          );
+          const result = await postAddComment({
+            course_id: courseID,
+            user_id: user._id,
+            point: commentData.rate,
+            description: commentData.description,
+          });
           if (result.status === 200) {
             setActionsStatus(!actionsStatus);
             return message.success(`Add comment successfully!`);
-          } else {
-            return message.error(result.data.message);
           }
         } catch (error) {
           if (error.response) {
@@ -327,21 +296,15 @@ const LearningComponent = (props) => {
                                     </span>,
                                     <span
                                       onClick={async () => {
-                                        let commentId = item._id;
-                                        await axios.delete(
-                                          `http://localhost:4000/comments/${commentId}`,
-                                          {
-                                            headers: {
-                                              "Content-Type":
-                                                "application/json",
-                                              Authorization: "Bearer " + jwt,
-                                            },
-                                          }
+                                        const result = await deleteComment(
+                                          item._id
                                         );
-                                        setActionsStatus(!actionsStatus);
-                                        return message.success(
-                                          `Delete comment successfully! `
-                                        );
+                                        if (result.status === 200) {
+                                          setActionsStatus(!actionsStatus);
+                                          return message.success(
+                                            `Delete comment successfully! `
+                                          );
+                                        }
                                       }}
                                     >
                                       Delete
@@ -418,31 +381,24 @@ const LearningComponent = (props) => {
                                               `You need to fill in the information for a comment!`
                                             );
                                           } else {
-                                            let commentId = item._id;
                                             let userId = user._id;
-                                            await axios.put(
-                                              `http://localhost:4000/comments/${commentId}`,
+                                            const result = await putUpdateComment(
+                                              item._id,
                                               {
                                                 course_id: courseID,
                                                 user_id: userId,
                                                 point: updateData.rateUpdate,
                                                 description:
                                                   updateData.description,
-                                              },
-                                              {
-                                                headers: {
-                                                  "Content-Type":
-                                                    "application/json",
-                                                  Authorization:
-                                                    "Bearer " + jwt,
-                                                },
                                               }
                                             );
-                                            setActionsStatus(!actionsStatus);
-                                            setStatus(true);
-                                            return message.success(
-                                              ` Update comment successfully! `
-                                            );
+                                            if (result.status === 200) {
+                                              setActionsStatus(!actionsStatus);
+                                              setStatus(true);
+                                              return message.success(
+                                                ` Update comment successfully! `
+                                              );
+                                            }
                                           }
                                         } catch (error) {
                                           if (error.response) {

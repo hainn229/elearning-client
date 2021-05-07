@@ -8,7 +8,15 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 
 import queryString from "query-string";
-import axios from "axios";
+import {
+  deleteComment,
+  getComments,
+  getDetailsCourse,
+  postAddComment,
+  postAddOrder,
+  postAddToWishlist,
+  putUpdateComment,
+} from "../../APIs";
 
 import {
   StarOutlined,
@@ -34,7 +42,6 @@ import {
 const desc = [1, 2, 3, 4, 5];
 
 const DetailsCourseComponent = (props) => {
-  const jwt = localStorage.getItem("token");
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
@@ -71,17 +78,9 @@ const DetailsCourseComponent = (props) => {
     setRateUpdate(value);
   };
 
-  const getDetailsCourse = async () => {
+  const getDetails = async () => {
     try {
-      const result = await axios.get(
-        `http://localhost:4000/courses/${courseID}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
+      const result = await getDetailsCourse(courseID);
       if (result.status === 200) {
         setCategory(result.data.course.cat_id.cat_name);
         if (result.data.course.tutor_id) {
@@ -96,37 +95,22 @@ const DetailsCourseComponent = (props) => {
     }
   };
   const [actionsStatus, setActionsStatus] = useState(false);
-  const getComments = async () => {
+  const getComment = async () => {
     const paramsKey = queryString.stringify(pagination);
-    const result = await axios.get(
-      `http://localhost:4000/comments/${courseID}?${paramsKey}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + jwt,
-        },
-      }
-    );
-    setComment(result.data.comments);
-    setTotalItems(result.data.totalItems);
+    const result = await getComments(courseID, paramsKey);
+    if (result.status === 200) {
+      setComment(result.data.comments);
+      setTotalItems(result.data.totalItems);
+    }
   };
 
   const onAddToCart = async (id) => {
-    if (user) {
+    if (user.email) {
       try {
-        const result = await axios.post(
-          `http://localhost:4000/orders/add`,
-          {
-            user_id: user._id,
-            course_id: id,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
+        const result = await postAddOrder({
+          user_id: user._id,
+          course_id: id,
+        });
         if (result.status === 200) {
           message.success(result.data.message);
           setTimeout(() => {
@@ -140,26 +124,19 @@ const DetailsCourseComponent = (props) => {
           return message.error(error.message);
         }
       }
+    } else {
+      return message.warning(`You need to be signed in to use this feature!`);
     }
   };
   const onAddToWishlist = async (id) => {
     try {
-      if (!user) {
-        return message.error(`You need to be signed in to use this feature!`);
+      if (!user.email) {
+        return message.warning(`You need to be signed in to use this feature!`);
       } else {
-        const response = await axios.post(
-          `http://localhost:4000/wishlists/add`,
-          {
-            user_id: user._id,
-            course_id: id,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
+        const response = await postAddToWishlist({
+          user_id: user._id,
+          course_id: id,
+        });
         if (response.status === 200) {
           return message.success(response.data.message);
         }
@@ -174,11 +151,11 @@ const DetailsCourseComponent = (props) => {
   };
 
   useEffect(() => {
-    getDetailsCourse();
+    getDetails();
   }, [courseID]);
 
   useEffect(() => {
-    getComments();
+    getComment();
   }, [actionsStatus, courseID, pagination]);
   return (
     <>
@@ -303,26 +280,18 @@ const DetailsCourseComponent = (props) => {
                             );
                           }
                           try {
-                            const userId = user._id;
-                            await axios.post(
-                              `http://localhost:4000/comments/add`,
-                              {
-                                course_id: courseID,
-                                user_id: userId,
-                                point: commentData.rate,
-                                description: commentData.description,
-                              },
-                              {
-                                headers: {
-                                  "Content-Type": "application/json",
-                                  Authorization: "Bearer " + jwt,
-                                },
-                              }
-                            );
-                            setActionsStatus(!actionsStatus);
-                            return message.success(
-                              ` Add comment successfully! `
-                            );
+                            const result = await postAddComment({
+                              course_id: courseID,
+                              user_id: user._id,
+                              point: commentData.rate,
+                              description: commentData.description,
+                            });
+                            if (result.status === 200) {
+                              setActionsStatus(!actionsStatus);
+                              return message.success(
+                                ` Add comment successfully! `
+                              );
+                            }
                           } catch (error) {
                             return message.error(error.response.data.message);
                           }
@@ -359,20 +328,15 @@ const DetailsCourseComponent = (props) => {
                                   </span>,
                                   <span
                                     onClick={async () => {
-                                      let commentId = item._id;
-                                      await axios.delete(
-                                        `http://localhost:4000/comments/${commentId}`,
-                                        {
-                                          headers: {
-                                            "Content-Type": "application/json",
-                                            Authorization: "Bearer " + jwt,
-                                          },
-                                        }
+                                      const result = await deleteComment(
+                                        item._id
                                       );
-                                      setActionsStatus(!actionsStatus);
-                                      return message.success(
-                                        `Delete comment successfully! `
-                                      );
+                                      if (result.status === 200) {
+                                        setActionsStatus(!actionsStatus);
+                                        return message.success(
+                                          `Delete comment successfully! `
+                                        );
+                                      }
                                     }}
                                   >
                                     Delete
@@ -448,29 +412,22 @@ const DetailsCourseComponent = (props) => {
                                           `You need to fill in the information for a comment!`
                                         );
                                       } else {
-                                        let commentId = item._id;
-                                        let userId = user._id;
-                                        await axios.put(
-                                          `http://localhost:4000/comments/${commentId}`,
+                                        const result = await putUpdateComment(
+                                          item._id,
                                           {
                                             course_id: courseID,
-                                            user_id: userId,
+                                            user_id: user._id,
                                             point: updateData.rateUpdate,
                                             description: updateData.description,
-                                          },
-                                          {
-                                            headers: {
-                                              "Content-Type":
-                                                "application/json",
-                                              Authorization: "Bearer " + jwt,
-                                            },
                                           }
                                         );
-                                        setActionsStatus(!actionsStatus);
-                                        setStatus(true);
-                                        return message.success(
-                                          ` Update comment successfully! `
-                                        );
+                                        if (result.status === 200) {
+                                          setActionsStatus(!actionsStatus);
+                                          setStatus(true);
+                                          return message.success(
+                                            ` Update comment successfully! `
+                                          );
+                                        }
                                       }
                                     } catch (error) {
                                       if (error.response) {

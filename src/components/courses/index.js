@@ -3,7 +3,13 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import queryString from "query-string";
-import axios from "axios";
+import {
+  getAllCategories,
+  getCoursesActive,
+  postAddCourseRecent,
+  postAddOrder,
+  postAddToWishlist,
+} from "../../APIs";
 import { PlusOutlined, HeartOutlined } from "@ant-design/icons";
 import {
   Breadcrumb,
@@ -26,7 +32,6 @@ const { Search } = Input;
 
 const CoursesComponent = () => {
   const dispatch = useDispatch();
-  const jwt = localStorage.getItem("token");
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
@@ -46,15 +51,7 @@ const CoursesComponent = () => {
 
   const search = async () => {
     const keys = queryString.stringify(filter);
-    const result = await axios.get(
-      `http://localhost:4000/courses/active?${keys}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + jwt,
-        },
-      }
-    );
+    const result = await getCoursesActive(keys);
     if (result.status === 200) {
       setResultsFilter(result.data.courses.docs);
       setSearchResultsData(result.data.courses.docs);
@@ -66,45 +63,27 @@ const CoursesComponent = () => {
   }, [filter]);
 
   const getCategories = async () => {
-    const result = await axios.get(`http://localhost:4000/categories/all`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + jwt,
-      },
-    });
-    dispatch({ type: "CATEGORIES", payload: result.data.categories });
+    const result = await getAllCategories();
+    if (result.status === 200) {
+      dispatch({ type: "CATEGORIES", payload: result.data.categories });
+    }
   };
 
   const getCourses = async () => {
     const keys = queryString.stringify(pagination);
-    const result = await axios.get(
-      `http://localhost:4000/courses/active?${keys}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + jwt,
-        },
-      }
-    );
-    dispatch({ type: "COURSES", payload: result.data.courses.docs });
+    const result = await getCoursesActive(keys);
+    if (result.status === 200) {
+      dispatch({ type: "COURSES", payload: result.data.courses.docs });
+    }
   };
 
   const addToCart = async (id) => {
-    if (user) {
+    if (user.email) {
       try {
-        const response = await axios.post(
-          `http://localhost:4000/orders/add`,
-          {
-            user_id: user._id,
-            course_id: id,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
+        const response = await postAddOrder({
+          user_id: user._id,
+          course_id: id,
+        });
         if (response.status === 200) {
           message.success(response.data.message);
           setTimeout(() => {
@@ -118,26 +97,19 @@ const CoursesComponent = () => {
           return message.error(error.message);
         }
       }
+    } else {
+      return message.warning(`You need to be signed in to use this feature!`);
     }
   };
   const addToWishlist = async (id) => {
     try {
-      if (!user) {
-        return message.error(`You need to be signed in to use this feature!`);
+      if (!user.email) {
+        return message.warning(`You need to be signed in to use this feature!`);
       } else {
-        const response = await axios.post(
-          `http://localhost:4000/wishlists/add`,
-          {
-            user_id: user._id,
-            course_id: id,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
+        const response = await postAddToWishlist({
+          user_id: user._id,
+          course_id: id,
+        });
         if (response.status === 200) {
           return message.success(response.data.message);
         }
@@ -268,7 +240,8 @@ const CoursesComponent = () => {
                       border: "2px solid whitesmoke",
                     }}
                     cover={
-                      <img
+                      <Image
+                        preview={false}
                         alt="poster"
                         src={item.poster}
                         style={{ width: 300, height: 200 }}
@@ -281,19 +254,15 @@ const CoursesComponent = () => {
                           <Link
                             to={`/courses/${item._id}`}
                             onClick={async () => {
-                              await axios.post(
-                                `http://localhost:4000/courses/recent/add`,
-                                {
+                              if (user.email) {
+                                const result = await postAddCourseRecent({
                                   course_id: item._id,
                                   user_id: user._id,
-                                },
-                                {
-                                  headers: {
-                                    "Content-type": "application/json",
-                                    Authorization: "Bearer " + jwt,
-                                  },
+                                });
+                                if (result.status === 200) {
+                                  console.log(result.data);
                                 }
-                              );
+                              }
                             }}
                           >
                             {item.course_title}
@@ -378,25 +347,28 @@ const CoursesComponent = () => {
                         height: "auto",
                         border: "2px solid whitesmoke",
                       }}
-                      cover={<img alt="example" src={item.poster} />}
+                      cover={
+                        <Image
+                          preview={false}
+                          alt="poster"
+                          src={item.poster}
+                          style={{ width: 300, height: 200 }}
+                        />
+                      }
                     >
                       <Meta
                         title={
                           <Link
                             onClick={async () => {
-                              await axios.post(
-                                `http://localhost:4000/courses/recent/add`,
-                                {
+                              if (user.email) {
+                                const result = await postAddCourseRecent({
                                   course_id: item._id,
                                   user_id: user._id,
-                                },
-                                {
-                                  headers: {
-                                    "Content-type": "application/json",
-                                    Authorization: "Bearer " + jwt,
-                                  },
+                                });
+                                if (result.status === 200) {
+                                  console.log(result.data.message);
                                 }
-                              );
+                              }
                             }}
                             to={`/courses/${item._id}`}
                           >

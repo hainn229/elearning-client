@@ -1,10 +1,14 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { useHistory, Link } from "react-router-dom";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { useForm } from "react-hook-form";
-import axios from "axios";
+
+import {
+  postUpdatePassword,
+  putUpdateUser,
+  uploadImage,
+} from "../../APIs/index";
 
 import { UploadOutlined } from "@ant-design/icons";
 import {
@@ -35,12 +39,9 @@ const btn = {
 
 const MyAccountComponent = () => {
   useAuth();
-  const jwt = localStorage.getItem("token");
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
-  const userId = user._id;
-  const history = useHistory();
   const [urlAvt, setUrlAvt] = useState();
   const [isDisabled, setIsDisabled] = useState(false);
   const onChangeAvatar = async (e) => {
@@ -51,16 +52,10 @@ const MyAccountComponent = () => {
         setIsDisabled(true);
         const formData = new FormData();
         formData.append("image", e.file);
-        const result = await axios.post(
-          `http://localhost:4000/upload/images`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        setUrlAvt(result.data.url);
+        const result = await uploadImage(formData);
+        if (result.status === 200) {
+          setUrlAvt(result.data.url);
+        }
       }
     } catch (error) {
       if (error.response) {
@@ -72,21 +67,12 @@ const MyAccountComponent = () => {
   };
   const onSubmitUpdate = async (updateInfo) => {
     try {
-      const result = await axios.put(
-        `http://localhost:4000/auth/${userId}`,
-        {
-          full_name: updateInfo.full_name,
-          gender: updateInfo.gender,
-          date_of_birth: updateInfo.date_of_birth._d,
-          avatarUrl: urlAvt,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
+      const result = await putUpdateUser({
+        full_name: updateInfo.full_name,
+        gender: updateInfo.gender,
+        date_of_birth: updateInfo.date_of_birth._d,
+        avatarUrl: urlAvt,
+      });
       if (result.status === 200) {
         message.success(result.data.message);
         return window.history.go();
@@ -102,21 +88,17 @@ const MyAccountComponent = () => {
 
   const onSubmitUpdatePassword = async (updateInfo) => {
     try {
-      await axios.put(
-        `http://localhost:4000/auth/updatePassword`,
-        {
-          cur_password: updateInfo.cur_password,
-          new_password: updateInfo.new_password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
-      message.sucess(`Password Has Been Updated Successfully !`);
-      return history.go();
+      const result = await postUpdatePassword({
+        id: user._id,
+        cur_password: updateInfo.cur_password,
+        new_password: updateInfo.new_password,
+      });
+      if (result.status === 200) {
+        message.success(result.data.message);
+        setTimeout(() => {
+          return window.history.go();
+        }, 1500);
+      }
     } catch (error) {
       if (error.response) {
         return message.error(error.response.data.message);
@@ -148,7 +130,8 @@ const MyAccountComponent = () => {
             <TabPane tab={<h6>Edit Profile</h6>} key="1">
               <Form {...form} name="basic" onFinish={onSubmitUpdate}>
                 <Form.Item label="Email address">
-                  <p>{user.email}</p>
+                  {/* <p>{user.email}</p> */}
+                  <Input value={user.email} disabled/>
                 </Form.Item>
 
                 <Form.Item

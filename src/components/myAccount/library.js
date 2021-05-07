@@ -7,6 +7,13 @@ import { useAuth } from "../../hooks/useAuth";
 import axios from "axios";
 import queryString from "query-string";
 
+import {
+  deleteWishlist,
+  getOrdersLibrary,
+  getWishlist,
+  postAddOrder,
+} from "../../APIs/index";
+
 import { PlusOutlined, HeartOutlined } from "@ant-design/icons";
 import {
   Breadcrumb,
@@ -40,15 +47,7 @@ const LibraryComponent = () => {
     try {
       if (userId) {
         const keys = queryString.stringify(pagination);
-        const result = await axios.get(
-          `http://localhost:4000/orders/library/${userId}?${keys}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
+        const result = await getOrdersLibrary(userId, keys);
         if (result.status === 200) {
           setLibrary(result.data.library);
         }
@@ -63,19 +62,13 @@ const LibraryComponent = () => {
   };
 
   const [wishlist, setWishlist] = useState();
-  const getWishlist = async (userId) => {
+  const getWishlists = async (userId) => {
     try {
       if (userId) {
-        const result = await axios.get(
-          `http://localhost:4000/wishlists/${userId}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
-        setWishlist(result.data.wishlists);
+        const result = await getWishlist(userId);
+        if (result.status === 200) {
+          setWishlist(result.data.wishlists);
+        }
       }
     } catch (error) {
       if (error.response) {
@@ -90,19 +83,10 @@ const LibraryComponent = () => {
   const onAddToCart = async (courseId) => {
     if (user) {
       try {
-        const result = await axios.post(
-          `http://localhost:4000/orders/add`,
-          {
-            user_id: user._id,
-            course_id: courseId,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
+        const result = await postAddOrder({
+          user_id: user._id,
+          course_id: courseId,
+        });
         if (result.status === 200) {
           setActionsStatus(!actionsStatus);
           message.success(result.data.message);
@@ -120,12 +104,7 @@ const LibraryComponent = () => {
     }
   };
   const onRemove = async (id) => {
-    const result = await axios.delete(`http://localhost:4000/wishlists/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + jwt,
-      },
-    });
+    const result = await deleteWishlist(id);
     if (result.status === 200) {
       setActionsStatus(!actionsStatus);
       return message.success(result.data.message);
@@ -134,7 +113,7 @@ const LibraryComponent = () => {
 
   useEffect(() => {
     getLibrary(userId);
-    getWishlist(userId);
+    getWishlists(userId);
   }, [userId, actionsStatus]);
 
   return (
@@ -182,7 +161,7 @@ const LibraryComponent = () => {
                       cover={
                         <Image
                           preview={false}
-                          height={300}
+                          height={200}
                           alt="poster"
                           src={item.course_id.poster}
                         />
@@ -240,7 +219,14 @@ const LibraryComponent = () => {
                         height: "auto",
                         border: "2px solid whitesmoke",
                       }}
-                      cover={<img alt="poster" src={item.course_id.poster} />}
+                      cover={
+                        <Image
+                          alt="poster"
+                          preview={false}
+                          height={200}
+                          src={item.course_id.poster}
+                        />
+                      }
                     >
                       <Meta
                         title={

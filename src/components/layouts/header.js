@@ -3,14 +3,23 @@
 /* eslint-disable jsx-a11y/img-redundant-alt */
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useAuth } from "../../hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import GoogleLogin from "react-google-login";
 import { PaypalCheckout } from "../paypal/index";
-import { postSignIn } from "../../APIs/index";
+import {
+  postSignIn,
+  postSignInWithGoogle,
+  postSignUp,
+  getOrders,
+  putUpdateOrder,
+  putUpdateUser,
+  postUpdateAmount,
+  deleteOrder,
+  postAddToWishlist,
+} from "../../APIs/index";
 import {
   Layout,
   Menu,
@@ -27,7 +36,6 @@ import {
   message,
   Popconfirm,
   InputNumber,
-  Badge,
 } from "antd";
 import {
   ShoppingCartOutlined,
@@ -35,7 +43,6 @@ import {
   GoogleOutlined,
   LoginOutlined,
   LogoutOutlined,
-  MoneyCollectOutlined,
 } from "@ant-design/icons";
 
 const { Header } = Layout;
@@ -62,8 +69,6 @@ const btn = {
 const HeaderComponent = (props) => {
   useAuth();
   const dispatch = useDispatch();
-
-  const jwt = localStorage.getItem("token");
   const [isModalSignIn, setIsModalSignIn] = useState(false);
   const [isModalSignUp, setIsModalSignUp] = useState(false);
   const defaultValSignin = {
@@ -99,39 +104,28 @@ const HeaderComponent = (props) => {
           );
         }
       }
-      return windows.history.push();
+      return window.history.go();
     } catch (error) {
       if (error.response) {
         return message.error(`${error.response.data.message}`);
       } else {
-        return message.error(
-          `Could not find a user with an entered email address !`
-        );
+        return message.error(error.message);
       }
     }
   };
 
   const onFinishSignup = async (dataSignup) => {
     try {
-      const result = await axios.post(
-        `http://localhost:4000/auth/register`,
-        {
-          full_name: dataSignup.full_name,
-          email: dataSignup.email,
-          password: dataSignup.password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
+      const result = await postSignUp({
+        full_name: dataSignup.full_name,
+        email: dataSignup.email,
+        password: dataSignup.password,
+      });
       if (result.status === 200) {
         setIsModalSignUp(false);
       }
       message.success(`${result.data.message}`);
-      return history.push();
+      return window.history.go();
     } catch (error) {
       if (error.response) {
         return message.error(`${error.response.data.message}`);
@@ -143,17 +137,9 @@ const HeaderComponent = (props) => {
 
   const responseGoogle = async (response) => {
     try {
-      const result = await axios.post(
-        `http://localhost:4000/auth/google`,
-        {
-          access_token: response.accessToken,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const result = await postSignInWithGoogle({
+        access_token: response.accessToken,
+      });
       if (result.status === 200) {
         localStorage.setItem("token", result.data.token);
         dispatch({ type: "LOGIN_DATA", payload: result.data.user });
@@ -162,10 +148,10 @@ const HeaderComponent = (props) => {
           `Welcome ${result.data.user.full_name} to Elearning!`,
           5
         );
-        return history.push();
+        return window.history.go();
       }
     } catch (error) {
-      return message.error(`${error.response.data.message}`);
+      return message.error(error.response.data.message);
     }
   };
   const signOut = async () => {
@@ -181,15 +167,7 @@ const HeaderComponent = (props) => {
   const getCart = async () => {
     if (user.email) {
       try {
-        const result = await axios.get(
-          `http://localhost:4000/orders/${userId}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + jwt,
-            },
-          }
-        );
+        const result = await getOrders(userId);
         const listCart = result.data.cart;
         setTotalCart(
           listCart.reduce((accumulator, currentValue) => {
@@ -204,35 +182,15 @@ const HeaderComponent = (props) => {
   };
   const updateStatus = async () => {
     for (let i = 0; i <= cart.length; i++) {
-      await axios.put(
-        `http://localhost:4000/orders/${cart[i]._id}`,
-        {
-          status: true,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
+      await putUpdateOrder(cart[i]._id, { status: true });
     }
-    return message.success(`Update Status Succesfully !`);
+    return message.success(`Payment Order Succesfully !`);
   };
 
   const updateAmount = async () => {
-    const result = await axios.put(
-      `http://localhost:4000/auth/${user._id}`,
-      {
-        amount: user.amount - totalCart,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + jwt,
-        },
-      }
-    );
+    const result = await putUpdateUser(user._id, {
+      amount: user.amount - totalCart,
+    });
     if (result.status === 200) {
       setTimeout(() => {
         message.success(result.data.message);
@@ -244,21 +202,12 @@ const HeaderComponent = (props) => {
   // Paypal
   const onSuccess = async (data) => {
     try {
-      const response = await axios.post(
-        `http://localhost:4000/users/updateAmount`,
-        {
-          paymentId: data.paymentID,
-          user_id: user._id,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
+      const response = await postUpdateAmount({
+        paymentId: data.paymentID,
+        user_id: user._id,
+      });
       updateStatus();
-      message.success(`${response.data.message}`);
+      message.success(response.data.message);
       return window.history.go();
     } catch (error) {
       return message.error(`${error.message}`);
@@ -691,23 +640,14 @@ const HeaderComponent = (props) => {
               total={totalAmount}
               onSuccess={async (data) => {
                 try {
-                  const result = await axios.post(
-                    `http://localhost:4000/users/updateAmount`,
-                    {
-                      paymentId: data.paymentID,
-                      user_id: user._id,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer " + jwt,
-                      },
-                    }
-                  );
+                  const result = await postUpdateAmount({
+                    paymentId: data.paymentID,
+                    user_id: user._id,
+                  });
                   if (result.status === 200) {
                     setModalUpdateAmount(false);
                     setTimeout(() => {
-                      message.success(`${result.data.message}`);
+                      message.success(result.data.message);
                     }, 5000);
                     return window.history.go();
                   }
@@ -715,8 +655,14 @@ const HeaderComponent = (props) => {
                   return message.error(`${error.message}`);
                 }
               }}
-              transactionError={transactionError}
-              transactionCanceled={transactionCanceled}
+              transactionError={() => {
+                setModalUpdateAmount(false);
+                transactionError();
+              }}
+              transactionCanceled={() => {
+                setModalUpdateAmount(false);
+                transactionCanceled();
+              }}
             />
           </Form.Item>
         </Form>
@@ -757,30 +703,17 @@ const HeaderComponent = (props) => {
                 <Col style={{ float: "right", width: 100, marginRight: 10 }}>
                   <Button
                     onClick={async () => {
-                      await axios.delete(
-                        `http://localhost:4000/orders/${item._id}`,
-                        {
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: "Bearer " + jwt,
-                          },
-                        }
-                      );
+                      await deleteOrder(item._id);
 
-                      await axios.post(
-                        `http://localhost:4000/wishlists/add`,
-                        {
-                          course_id: item.course_id._id,
-                          user_id: user._id,
-                        },
-                        {
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: "Bearer " + jwt,
-                          },
-                        }
-                      );
-                      return message.success(`Move to Wishlist Succesfully !`);
+                      const result = await postAddToWishlist({
+                        course_id: item.course_id._id,
+                        user_id: user._id,
+                      });
+                      if (result.status === 200) {
+                        return message.success(
+                          `Move to Wishlist Succesfully !`
+                        );
+                      }
                     }}
                   >
                     Move to Wishlist
@@ -789,19 +722,12 @@ const HeaderComponent = (props) => {
                     type="link"
                     onClick={async () => {
                       try {
-                        const response = await axios.delete(
-                          `http://localhost:4000/orders/${item._id}`,
-                          {
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: "Bearer " + jwt,
-                            },
-                          }
-                        );
-                        setDeleteStatus(!deleteStatus);
-                        return message.success(response.data.message);
+                        const response = await deleteOrder(item._id);
+                        if (response.status === 200) {
+                          setDeleteStatus(!deleteStatus);
+                          return message.success(response.data.message);
+                        }
                       } catch (error) {
-                        console.log(error);
                         return message.error(error.message);
                       }
                     }}

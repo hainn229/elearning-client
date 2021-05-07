@@ -9,6 +9,12 @@ import queryString from "query-string";
 import axios from "axios";
 
 import { Table } from "react-bootstrap";
+import {
+  getAllCategories,
+  getCourses,
+  postAddCourse,
+  uploadImage,
+} from "../../APIs";
 
 import { UploadOutlined, PlusOutlined } from "@ant-design/icons";
 import {
@@ -53,19 +59,15 @@ const TutorComponent = () => {
   const [categoriesData, setCategoriesData] = useState([]);
 
   const getCategories = async () => {
-    const result = await axios.get(`http://localhost:4000/categories/all`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + jwt,
-      },
-    });
-    setCategoriesData(result.data.categories);
+    const result = await getAllCategories();
+    if (result.status === 200) {
+      setCategoriesData(result.data.categories);
+    }
   };
 
   useEffect(() => {
     getCategories();
   }, [1]);
-  console.log(categoriesData);
 
   const [coursesData, setCoursesData] = useState([]);
   const [filter, setFilter] = useState({
@@ -77,13 +79,10 @@ const TutorComponent = () => {
   });
   const getCoursesByTutorId = async () => {
     const keys = queryString.stringify(filter);
-    const results = await axios.get(`http://localhost:4000/courses?${keys}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + jwt,
-      },
-    });
-    setCoursesData(results.data.courses.docs);
+    const results = await getCourses(keys);
+    if (results.status === 200) {
+      setCoursesData(results.data.courses.docs);
+    }
   };
 
   useEffect(() => {
@@ -100,17 +99,11 @@ const TutorComponent = () => {
       try {
         const formData = new FormData();
         formData.append("image", file);
-        const result = await axios.post(
-          `http://localhost:4000/upload/images`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        setUrlPoster(result.data.url);
-        return message.success(`Upload Poster Success !`);
+        const result = await uploadImage(formData);
+        if (result.status === 200) {
+          setUrlPoster(result.data.url);
+          return message.success(`Upload Poster Success !`);
+        }
       } catch (error) {
         if (error.response) {
           return message.error(error.response.data.message);
@@ -123,27 +116,22 @@ const TutorComponent = () => {
 
   const onFinishCreateNewCourse = async (courseData) => {
     try {
-      await axios.post(
-        `http://localhost:4000/courses/add`,
-        {
-          course_title: courseData.title,
-          cat_id: courseData.cat_id,
-          level: courseData.level,
-          price: courseData.price,
-          description: courseData.description,
-          tutor_id: user._id,
-          status: false,
-          poster: urlPoster,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + jwt,
-          },
-        }
-      );
-      message.success(`Create Course Success !`);
-      return window.history.go();
+      const result = await postAddCourse({
+        course_title: courseData.title,
+        cat_id: courseData.cat_id,
+        level: courseData.level,
+        price: courseData.price,
+        description: courseData.description,
+        tutor_id: user._id,
+        status: false,
+        poster: urlPoster,
+      });
+      if (result.status === 200) {
+        message.success(`Create Course Success !`);
+        setTimeout(() => {
+          return window.history.go();
+        }, 1500);
+      }
     } catch (error) {
       if (error.response) {
         return message.error(error.response.data.message);
@@ -286,152 +274,148 @@ const TutorComponent = () => {
                 )}
               </TabPane>
               <TabPane tab="Create New Course" key="2">
-                  <Form
-                    {...formStyle}
-                    form={form}
-                    name="basic"
-                    initialValues={{ remember: true }}
-                    onFinish={onFinishCreateNewCourse}
+                <Form
+                  {...formStyle}
+                  form={form}
+                  name="basic"
+                  initialValues={{ remember: true }}
+                  onFinish={onFinishCreateNewCourse}
+                >
+                  <Form.Item
+                    label="Title"
+                    name="title"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input title",
+                      },
+                    ]}
                   >
-                    <Form.Item
-                      label="Title"
-                      name="title"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please input title",
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder="What is the title of the course?"
-                        allowClear
-                      />
-                    </Form.Item>
+                    <Input
+                      placeholder="What is the title of the course?"
+                      allowClear
+                    />
+                  </Form.Item>
 
-                    <Form.Item
-                      label="Topic"
-                      name="cat_id"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select category for course !",
-                        },
-                      ]}
+                  <Form.Item
+                    label="Topic"
+                    name="cat_id"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please select category for course !",
+                      },
+                    ]}
+                  >
+                    <Select
+                      style={{ width: "100%" }}
+                      placeholder="What is the topic of the course?"
                     >
-                      <Select
-                        style={{ width: "100%" }}
-                        placeholder="What is the topic of the course?"
-                      >
-                        {categoriesData.map((i) => {
-                          return <Option key={i._id}>{i.cat_name}</Option>;
-                        })}
-                      </Select>
-                    </Form.Item>
+                      {categoriesData.map((i) => {
+                        return <Option key={i._id}>{i.cat_name}</Option>;
+                      })}
+                    </Select>
+                  </Form.Item>
 
-                    <Form.Item
-                      name="level"
-                      label="Level"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select level for course !",
-                        },
-                      ]}
-                      hasFeedback
+                  <Form.Item
+                    name="level"
+                    label="Level"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please select level for course !",
+                      },
+                    ]}
+                    hasFeedback
+                  >
+                    <Select
+                      showSearch
+                      style={{ width: "100%" }}
+                      defaultValue="All levels"
                     >
-                      <Select
-                        showSearch
-                        style={{ width: "100%" }}
-                        defaultValue="All levels"
-                      >
-                        <Option value="All levels">All levels</Option>
-                        <Option value="Beginning level">Beginning level</Option>
-                        <Option value="Intermediate level">
-                          Intermediate level
-                        </Option>
-                        <Option value="Advanced level">Advanced level</Option>
-                      </Select>
-                    </Form.Item>
+                      <Option value="All levels">All levels</Option>
+                      <Option value="Beginning level">Beginning level</Option>
+                      <Option value="Intermediate level">
+                        Intermediate level
+                      </Option>
+                      <Option value="Advanced level">Advanced level</Option>
+                    </Select>
+                  </Form.Item>
 
-                    <Form.Item
-                      name="price"
-                      label="Price"
-                      hasFeedback
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please input price for course !",
-                        },
-                      ]}
-                    >
-                      <InputNumber
-                        min={0}
-                        style={{ width: "100%" }}
-                        placeholder="Enter price for  your course, minimum is 0"
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      name="description"
-                      label="Description"
-                      rules={[
-                        {
-                          requireD: true,
-                          message: "Please input desciption for course !",
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        placeholder="Detailed description: (eg requirements, what you'll learn, etc.)"
-                        rows={4}
-                        style={{ width: "100%" }}
-                        allowClear
-                      />
-                    </Form.Item>
+                  <Form.Item
+                    name="price"
+                    label="Price"
+                    hasFeedback
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input price for course !",
+                      },
+                    ]}
+                  >
+                    <InputNumber
+                      min={0}
+                      style={{ width: "100%" }}
+                      placeholder="Enter price for  your course, minimum is 0"
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="description"
+                    label="Description"
+                    rules={[
+                      {
+                        requireD: true,
+                        message: "Please input desciption for course !",
+                      },
+                    ]}
+                  >
+                    <TextArea
+                      placeholder="Detailed description: (eg requirements, what you'll learn, etc.)"
+                      rows={4}
+                      style={{ width: "100%" }}
+                      allowClear
+                    />
+                  </Form.Item>
 
-                    <Form.Item
-                      label="Poster"
-                      listType="picture-card"
-                      className="avatar-uploader"
-                      rules={[
-                        {
-                          required: true,
-                          message:
-                            "Please upload your avatar, maximum is 5MB !",
-                        },
-                      ]}
+                  <Form.Item
+                    label="Poster"
+                    listType="picture-card"
+                    className="avatar-uploader"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please upload your avatar, maximum is 5MB !",
+                      },
+                    ]}
+                  >
+                    <Upload
+                      onChange={(e) => {
+                        onChangePoster(e.file);
+                      }}
                     >
-                      <Upload
-                        onChange={(e) => {
-                          onChangePoster(e.file);
-                        }}
-                      >
-                        <Button>
-                          <UploadOutlined /> Click to upload
-                        </Button>
-                      </Upload>
-                    </Form.Item>
-
-                    <Form.Item>
-                      <Button
-                        type="primary"
-                        htmlType="submit"
-                        style={{ marginLeft: 20, width: 100 }}
-                      >
-                        Submit
+                      <Button>
+                        <UploadOutlined /> Click to upload
                       </Button>
-                      <Button
-                        style={{ marginLeft: 20, width: 100 }}
-                        onClick={onReset}
-                      >
-                        Reset
-                      </Button>
-                    </Form.Item>
-                  </Form>
+                    </Upload>
+                  </Form.Item>
+
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      style={{ marginLeft: 20, width: 100 }}
+                    >
+                      Submit
+                    </Button>
+                    <Button
+                      style={{ marginLeft: 20, width: 100 }}
+                      onClick={onReset}
+                    >
+                      Reset
+                    </Button>
+                  </Form.Item>
+                </Form>
               </TabPane>
-              {/* <TabPane tab="Tab Title 3" key="3">
-                <p>Content of Tab Pane 3</p>
-              </TabPane> */}
             </Tabs>
           </div>
         </div>

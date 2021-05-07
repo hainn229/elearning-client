@@ -6,17 +6,9 @@ import { useAuth } from "../../hooks/useAuth";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 
+import {} from "@ant-design/icons";
+import { Breadcrumb, Row, Col, Button, Form, Input, Modal } from "antd";
 
-import {
-} from "@ant-design/icons";
-import {
-  Breadcrumb,
-  Row,
-  Col,
-  Button,
-  Form,
-  Input,
-} from "antd";
 const form = {
   labelCol: { span: 6 },
   wrapperCol: {
@@ -31,13 +23,10 @@ const btn = {
 
 const ForgotPasswordComponent = () => {
   useAuth();
-  // const dispatch = useDispatch();
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
-  const userId = user._id;
-  const history = useHistory();
-
+  const [modalResetByEmail, setModalResetByEmail] = useState(false);
   return (
     <>
       <br />
@@ -55,6 +44,10 @@ const ForgotPasswordComponent = () => {
           </Col>
         </Row>
         <div className="site-layout-content" style={{ width: "100%" }}>
+          <h6>
+            Please select one of the following options to reset your password!
+          </h6>
+          <hr />
           <Form
             {...form}
             name="basic"
@@ -74,7 +67,7 @@ const ForgotPasswordComponent = () => {
             >
               <Input allowClear />
             </Form.Item>
-            
+
             <Form.Item {...btn}>
               <Button
                 type="primary"
@@ -85,7 +78,51 @@ const ForgotPasswordComponent = () => {
               </Button>
             </Form.Item>
           </Form>
+          <Button type="link" onClick={() => setModalResetByEmail(true)}>
+            Reset Password by Email
+          </Button>
+          <br />
+          <Button type="link">Reset Password by Question</Button>
         </div>
+        <Modal
+          title="Reset Password by Email"
+          centered={true}
+          width={400}
+          visible={modalResetByEmail}
+          onCancel={() => setModalResetByEmail(false)}
+          footer={null}
+        >
+          <Form
+            {...form}
+            name="basic"
+            // onFinish={onSubmitUpdatePassword}
+          >
+            <Form.Item
+              label="Email Address"
+              name="email"
+              hasFeedback
+              rules={[
+                {
+                  type: "email",
+                  required: true,
+                  message: "Please input a valid email address !",
+                },
+              ]}
+            >
+              <Input allowClear />
+            </Form.Item>
+
+            <Form.Item {...btn}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                style={{ marginLeft: 20, width: 100 }}
+              >
+                Send
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
       </div>
     </>
   );
