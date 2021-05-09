@@ -46,6 +46,10 @@ export const postUpdatePassword = async (params) => {
   return await api.post(`/auth/updatePassword`, params);
 };
 
+export const postForgotPassword = async (params) => {
+  return await api.post(`/auth/forgotPassword`, params);
+};
+
 // Categories
 export const getAllCategories = async () => {
   return await api.get(`/categories/all`);
@@ -78,13 +82,13 @@ export const getDetailsCourse = async (params) => {
 };
 
 // Contents
-export const getCourseWithContents = async function (params) {
+export const getCourseWithContents = async (params)=> {
   return await api.get(`/contents/${params}`); // contents/:course_id
 };
-export const postAddContent = async function (params) {
-  return await api.get(`/contents/add`, params);
+export const postAddContent = async (params)=> {
+  return await api.post(`/contents/add`, params);
 };
-export const getContent = async function (params) {
+export const getContent = async (params)=> {
   return await api.get(`/contents/${params}`); // contents/:_id
 };
 

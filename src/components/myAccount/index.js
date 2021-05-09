@@ -67,7 +67,7 @@ const MyAccountComponent = () => {
   };
   const onSubmitUpdate = async (updateInfo) => {
     try {
-      const result = await putUpdateUser({
+      const result = await putUpdateUser(user._id, {
         full_name: updateInfo.full_name,
         gender: updateInfo.gender,
         date_of_birth: updateInfo.date_of_birth._d,
@@ -131,7 +131,7 @@ const MyAccountComponent = () => {
               <Form {...form} name="basic" onFinish={onSubmitUpdate}>
                 <Form.Item label="Email address">
                   {/* <p>{user.email}</p> */}
-                  <Input value={user.email} disabled/>
+                  <Input value={user.email} disabled />
                 </Form.Item>
 
                 <Form.Item
@@ -156,7 +156,7 @@ const MyAccountComponent = () => {
                 >
                   <Radio.Group
                     style={{ marginTop: 10 }}
-                    defaultValue={user.gender ? user.gender : ""}
+                    defaultValue={user.gender ? user.gender : "Male"}
                   >
                     <Radio value="Male">Male</Radio>
                     <Radio value="Female">Female</Radio>

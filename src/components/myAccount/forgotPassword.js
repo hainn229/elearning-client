@@ -1,13 +1,12 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { useHistory, Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { useForm } from "react-hook-form";
-import axios from "axios";
 
 import {} from "@ant-design/icons";
-import { Breadcrumb, Row, Col, Button, Form, Input, Modal } from "antd";
+import { Breadcrumb, Row, Col, Button, Form, Input, message } from "antd";
+import { postForgotPassword, postResetPassword } from "../../APIs";
 
 const form = {
   labelCol: { span: 6 },
@@ -26,7 +25,21 @@ const ForgotPasswordComponent = () => {
   const user = useSelector((state) => {
     return state.signInReducer.data;
   });
-  const [modalResetByEmail, setModalResetByEmail] = useState(false);
+  const onFinishForgotPassword = async (data) => {
+    try {
+      const result = await postForgotPassword(data);
+      if (result.status === 200) {
+        return message.success(result.data.message);
+      }
+    } catch (error) {
+      if (error.response) {
+        return message.error(error.response.data.message);
+      } else {
+        return message.error(error.message);
+      }
+    }
+  };
+
   return (
     <>
       <br />
@@ -43,16 +56,8 @@ const ForgotPasswordComponent = () => {
             </Breadcrumb>
           </Col>
         </Row>
-        <div className="site-layout-content" style={{ width: "100%" }}>
-          <h6>
-            Please select one of the following options to reset your password!
-          </h6>
-          <hr />
-          <Form
-            {...form}
-            name="basic"
-            // onFinish={onSubmitUpdatePassword}
-          >
+        <div className="getOTP" style={{ width: "100%" }}>
+          <Form {...form} name="basic" onFinish={onFinishForgotPassword}>
             <Form.Item
               label="Email Address"
               name="email"
@@ -78,51 +83,7 @@ const ForgotPasswordComponent = () => {
               </Button>
             </Form.Item>
           </Form>
-          <Button type="link" onClick={() => setModalResetByEmail(true)}>
-            Reset Password by Email
-          </Button>
-          <br />
-          <Button type="link">Reset Password by Question</Button>
         </div>
-        <Modal
-          title="Reset Password by Email"
-          centered={true}
-          width={400}
-          visible={modalResetByEmail}
-          onCancel={() => setModalResetByEmail(false)}
-          footer={null}
-        >
-          <Form
-            {...form}
-            name="basic"
-            // onFinish={onSubmitUpdatePassword}
-          >
-            <Form.Item
-              label="Email Address"
-              name="email"
-              hasFeedback
-              rules={[
-                {
-                  type: "email",
-                  required: true,
-                  message: "Please input a valid email address !",
-                },
-              ]}
-            >
-              <Input allowClear />
-            </Form.Item>
-
-            <Form.Item {...btn}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                style={{ marginLeft: 20, width: 100 }}
-              >
-                Send
-              </Button>
-            </Form.Item>
-          </Form>
-        </Modal>
       </div>
     </>
   );

@@ -49,6 +49,10 @@ const CoursesComponent = () => {
   });
   const [resultsFilter, setResultsFilter] = useState();
 
+  const getAllUsers = async () => {
+    
+  }
+
   const search = async () => {
     const keys = queryString.stringify(filter);
     const result = await getCoursesActive(keys);

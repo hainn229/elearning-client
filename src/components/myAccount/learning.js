@@ -120,11 +120,6 @@ const LearningComponent = (props) => {
       }
     }
   };
-
-  useEffect(() => {
-    getContentDetails();
-  }, [courseID]);
-
   const addComment = async (commentData) => {
     if (!user._id) {
       return message.warning(`You need to be signed in to use this feature!`);
@@ -152,7 +147,10 @@ const LearningComponent = (props) => {
         }
       }
     }
-  };
+  };  useEffect(() => {
+    getContentDetails();
+  }, [courseID]);
+
   return (
     <>
       <br />
@@ -272,7 +270,7 @@ const LearningComponent = (props) => {
                   </Form>
                 </Col>
                 <Col flex="auto" style={{ marginLeft: 15 }}>
-                  <List
+                  {comment ? <List
                     className="comment-list"
                     header={totalItems + " comments"}
                     itemLayout="horizontal"
@@ -281,7 +279,7 @@ const LearningComponent = (props) => {
                       <li>
                         <Comment
                           actions={
-                            user.email
+                            user
                               ? user._id === item.user_id._id
                                 ? [
                                     <span
@@ -446,7 +444,8 @@ const LearningComponent = (props) => {
                         />
                       </li>
                     )}
-                  />
+                  /> : ""}
+                  
                   <Button
                     className={
                       pagination.limitPage <= comment.length
